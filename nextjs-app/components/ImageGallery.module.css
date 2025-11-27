@@ -1,0 +1,129 @@
+.imageContainer {
+  display: grid;
+  grid-template-columns: repeat(var(--columns-mobile, 1), 1fr);
+  gap: 20px;
+  padding: 10px 0;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+}
+
+.imageWrapper {
+  position: relative;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 12px;
+  padding: 15px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.imageWrapper:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.imageLabel {
+  font-size: 18px;
+  font-weight: 600;
+  color: #d97706;
+  margin-bottom: 12px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-radius: 8px;
+  display: inline-block;
+}
+
+.imagePlaceholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 250px;
+  background: #f5f5f5;
+  border-radius: 10px;
+  color: #999;
+  margin: 10px 0;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #fbbf24;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: block;
+  margin: 0 auto;
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  font-size: 16px;
+}
+
+.error {
+  text-align: center;
+  padding: 40px;
+  color: #dc3545;
+  font-size: 16px;
+}
+
+@media (min-width: 768px) {
+  .imageContainer {
+    grid-template-columns: repeat(var(--columns-tablet, 1), 1fr);
+  }
+
+  .imageWrapper {
+    min-width: 320px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .imageContainer {
+    grid-template-columns: repeat(var(--columns-desktop, 2), 1fr);
+  }
+
+  .imageWrapper {
+    min-width: 300px;
+  }
+
+  .imageLabel {
+    font-size: 16px;
+    padding: 6px 12px;
+  }
+
+  .imagePlaceholder {
+    min-height: 200px;
+  }
+}
+
+@media (min-width: 1440px) {
+  .imageContainer {
+    grid-template-columns: repeat(var(--columns-wide, 3), 1fr);
+  }
+
+  .imageWrapper {
+    min-width: 320px;
+  }
+}

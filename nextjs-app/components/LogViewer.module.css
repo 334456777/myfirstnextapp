@@ -1,0 +1,116 @@
+.logContent {
+  font-family: 'Courier New', Consolas, monospace;
+  font-size: 14px;
+  line-height: 1.8;
+  color: #333;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  background: #f5f5f5;
+  border-radius: 8px;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+.logBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 15px;
+  min-height: 0;
+  -webkit-overflow-scrolling: touch;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+.dateSectionLabel {
+  font-size: 18px;
+  font-weight: bold;
+  color: #d97706;
+  margin-bottom: 15px;
+  padding: 10px 0;
+  border-bottom: 2px solid rgba(251, 191, 36, 0.3);
+}
+
+.latestLogCard {
+  background: rgba(251, 191, 36, 0.1);
+  padding: 15px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  border-left: 4px solid #fbbf24;
+  box-shadow: 0 2px 6px rgba(251, 191, 36, 0.15);
+  transition: all 0.2s ease;
+}
+
+.latestLogCard:hover {
+  background: rgba(251, 191, 36, 0.15);
+  box-shadow: 0 4px 10px rgba(251, 191, 36, 0.25);
+  transform: translateX(2px);
+}
+
+.historySection {
+  padding: 12px;
+  border-radius: 6px;
+  border-left: 4px solid #94a3b8;
+  background: rgba(148, 163, 184, 0.08);
+  margin-bottom: 10px;
+}
+
+.logDateLabel {
+  font-weight: bold;
+  color: #475569;
+  margin-bottom: 8px;
+  padding-bottom: 5px;
+  border-bottom: 2px dashed rgba(0, 0, 0, 0.1);
+  font-size: 15px;
+}
+
+.historyToggleBtn {
+  width: 100%;
+  padding: 12px 20px;
+  margin: 15px 0;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.historyToggleBtn:hover {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.4);
+  transform: translateY(-2px);
+}
+
+.toggleIcon {
+  font-size: 12px;
+  transition: transform 0.3s ease;
+}
+
+.historyLogs {
+  animation: slideDown 0.3s ease;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  font-size: 16px;
+}
+
+.error {
+  text-align: center;
+  padding: 40px;
+  color: #dc3545;
+  font-size: 16px;
+}

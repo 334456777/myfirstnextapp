@@ -1,0 +1,22 @@
+[Unit]
+Description=ECMWF Weather Forecast Service
+After=network.target
+
+[Service]
+Type=simple
+User=yusteven
+WorkingDirectory=/home/yusteven/html/backend
+ExecStart=/home/yusteven/.nvm/versions/node/v23.11.0/bin/node /home/yusteven/html/backend/weather-server.js
+Restart=always
+RestartSec=10
+
+# 环境变量
+Environment=NODE_ENV=production
+Environment=WEATHER_PORT=3001
+
+# 日志输出重定向
+StandardOutput=append:/home/yusteven/html/backend/weather-service.log
+StandardError=append:/home/yusteven/html/backend/weather-service.log
+
+[Install]
+WantedBy=multi-user.target

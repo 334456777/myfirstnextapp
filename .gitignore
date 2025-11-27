@@ -1,0 +1,46 @@
+# --- 系统文件 (macOS) ---
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# --- 通用依赖 ---
+# 忽略所有层级的 node_modules
+**/node_modules/
+
+# --- Next.js (前端) ---
+# 忽略 Next.js 的构建输出
+nextjs-app/.next/
+nextjs-app/out/
+nextjs-app/build/
+
+# --- Backend (后端) ---
+# 忽略后端缓存文件 (JSON缓存)
+backend/cache/*.json
+# 忽略整个 cache 文件夹内容但保留文件夹本身：
+backend/cache/*
+!backend/cache/.gitkeep
+
+# --- 日志文件 ---
+# 忽略 nextjs-app 中的 logs 文件夹
+nextjs-app/logs/
+# 忽略所有 .log 文件 (如 s3-service.log, weather-service.log)
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# --- 环境变量 (安全) ---
+# 包含敏感信息的环境文件绝不应上传
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# --- IDE 配置 (可选) ---
+.vscode/
+.idea/
+
+# --- HTTPS 证书相关 (安全) ---
+.well-known/

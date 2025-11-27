@@ -1,0 +1,22 @@
+[Unit]
+Description=AWS S3 Image Service
+After=network.target
+
+[Service]
+Type=simple
+User=yusteven
+WorkingDirectory=/home/yusteven/html/backend
+ExecStart=/home/yusteven/.nvm/versions/node/v23.11.0/bin/node /home/yusteven/html/backend/s3-server.js
+Restart=always
+RestartSec=10
+
+# 环境变量
+Environment=NODE_ENV=production
+Environment=S3_PORT=3002
+
+# 日志输出重定向
+StandardOutput=append:/home/yusteven/html/backend/s3-service.log
+StandardError=append:/home/yusteven/html/backend/s3-service.log
+
+[Install]
+WantedBy=multi-user.target

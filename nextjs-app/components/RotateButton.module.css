@@ -1,0 +1,45 @@
+.rotateBtn {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  border: none;
+  border-radius: 50%;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.4);
+  z-index: 1000;
+  font-size: 24px;
+  transition: transform 0.3s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.rotateBtn:hover {
+  transform: scale(1.1);
+}
+
+.rotateBtn:active {
+  transform: scale(0.95);
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+@media (max-width: 768px) {
+  .rotateBtn {
+    display: flex;
+    left: 10px;
+    bottom: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .rotateBtn {
+    width: 45px;
+    height: 45px;
+    font-size: 20px;
+  }
+}

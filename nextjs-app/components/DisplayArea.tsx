@@ -1,0 +1,31 @@
+'use client';
+
+import { FC } from 'react';
+import LogViewer from './LogViewer';
+import VersionViewer from './VersionViewer';
+import WeatherViewer from './WeatherViewer';
+import styles from './DisplayArea.module.css';
+import { TimeSlot } from '@/lib/weather';
+
+interface DisplayAreaProps {
+    title: string;
+    content: any;
+    contentType: string;
+    initialWeatherData?: TimeSlot[];
+}
+
+const DisplayArea: FC<DisplayAreaProps> = ({ title, content, contentType, initialWeatherData }) => {
+    return (
+        <div className={styles.displayArea}>
+            {title && <h2 className={styles.displayHeader}>{title}</h2>}
+            <div className={styles.displayContent}>
+                {!content && <div className={styles.empty}></div>}
+                {contentType === 'log' && content && <LogViewer url={content} />}
+                {contentType === 'version' && content && <VersionViewer imageKey={content} />}
+                {contentType === 'weather' && <WeatherViewer initialData={initialWeatherData} />}
+            </div>
+        </div>
+    );
+};
+
+export default DisplayArea;
