@@ -4,6 +4,11 @@ import { FC } from 'react';
 
 interface ImageIconProps {
     className?: string;
+    /**
+     * 控制图标状态
+     * true: 激活状态 (蓝色渐变)
+     * false: 未激活状态 (黑灰渐变)
+     */
     isActive?: boolean;
 }
 
