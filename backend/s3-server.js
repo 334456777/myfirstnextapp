@@ -217,8 +217,8 @@ app.get('/api/image/stream', async (req, res) => {
         res.setHeader('Content-Length', response.headers['content-length']);
       }
 
-      // 最新版缓存时间设短一点 (例如 5 分钟)，因为它可能会变
-      res.setHeader('Cache-Control', 'public, max-age=300');
+      // 最新版缓存时间设短一点 (例如 10 分钟)，因为它可能会变
+      res.setHeader('Cache-Control', 'public, max-age=600');
 
       // 管道传输：sos70 -> 你的服务器 -> 用户
       response.data.pipe(res);
