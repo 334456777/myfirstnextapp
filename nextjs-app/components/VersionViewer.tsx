@@ -26,8 +26,10 @@ interface SingleImagePanelProps {
     onImageReady: (key: string) => void;
     // 父组件控制是否显示图片
     shouldShow: boolean;
-    // 通知父组件需要刷新 token（流中断时）
-    onTokenExpired: () => void;
+    // 强制刷新计数器
+    refreshKey: number;
+    // 请求父组件刷新（当流中断时）
+    onRequestRefresh: () => void;
 }
 
 const SingleImagePanel: FC<SingleImagePanelProps> = ({
@@ -36,7 +38,8 @@ const SingleImagePanel: FC<SingleImagePanelProps> = ({
     onVersionsLoaded,
     onImageReady,
     shouldShow,
-    onTokenExpired
+    refreshKey,
+    onRequestRefresh
 }) => {
     // === UI State ===
     const [currentImageUrl, setCurrentImageUrl] = useState('');
@@ -71,9 +74,11 @@ const SingleImagePanel: FC<SingleImagePanelProps> = ({
             }
         }, 500);
 
-        // 准备参数
+        // 准备参数，添加时间戳绕过缓存
         const params = new URLSearchParams({ key: imageKey });
         if (verId !== 'latest') params.append('versionId', verId);
+        // 使用 refreshKey 作为缓存破坏参数
+        params.append('_t', String(refreshKey));
 
         try {
             const response = await fetch(`${BACKEND_URL}/api/image?${params.toString()}`, {
@@ -150,8 +155,8 @@ const SingleImagePanel: FC<SingleImagePanelProps> = ({
                         onError={() => {
                             setErrorMessage('流中断');
                             setShowSlowLoading(false);
-                            // 通知父组件 token 可能过期，需要刷新
-                            onTokenExpired();
+                            // 流中断时请求父组件刷新，强制重新获取新的 token
+                            onRequestRefresh();
                         }}
                     />
                 )}
@@ -172,7 +177,7 @@ const VersionViewer: FC<VersionViewerProps> = () => {
     // 改为存储选中的索引（第几个版本），而不是具体的 ID
     const [selectedIndex, setSelectedIndex] = useState<number>(0);
 
-    // 强制刷新计数器，用于触发子组件重新请求
+    // 强制刷新计数器，用于触发子组件重新请求（绕过缓存）
     const [refreshKey, setRefreshKey] = useState<number>(0);
 
     // 追踪每张图片的加载状态
@@ -181,16 +186,16 @@ const VersionViewer: FC<VersionViewerProps> = () => {
     // 所有图片都加载完成时，统一显示
     const allImagesReady = IMAGE_KEYS.every(key => readyImages.has(key));
 
+    // 当流中断时，强制刷新以获取新的 token（绕过缓存）
+    const handleRequestRefresh = useCallback(() => {
+        console.log('[VersionViewer] 流中断，刷新获取新 token...');
+        setRefreshKey(prev => prev + 1);
+    }, []);
+
     // 当版本切换时，重置加载状态
     useEffect(() => {
         setReadyImages(new Set());
     }, [selectedIndex, refreshKey]);
-
-    // 回调：当流中断（token 过期）时，刷新所有图片
-    const handleTokenExpired = useCallback(() => {
-        console.log('[VersionViewer] Token 过期，重新请求...');
-        setRefreshKey(prev => prev + 1);
-    }, []);
 
     // 回调：子组件加载完数据后，把版本表注册上来
     const handleVersionsLoaded = useCallback((key: string, versions: VersionData[]) => {
@@ -302,7 +307,8 @@ const VersionViewer: FC<VersionViewerProps> = () => {
                             onVersionsLoaded={handleVersionsLoaded}
                             onImageReady={handleImageReady}
                             shouldShow={allImagesReady}
-                            onTokenExpired={handleTokenExpired}
+                            refreshKey={refreshKey}
+                            onRequestRefresh={handleRequestRefresh}
                         />
                     );
                 })}
