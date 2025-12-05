@@ -2,6 +2,7 @@
 
 import { FC, useState, useEffect, useRef, useCallback } from 'react';
 import styles from './VersionViewer.module.css';
+import { ArrowUpIcon, ArrowDownIcon } from './icons';
 
 // 后端基准 URL，优先使用环境变量
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://www.yusteven.com';
@@ -251,12 +252,14 @@ const VersionViewer: FC<VersionViewerProps> = () => {
                 <div className={styles.versionNavigation}>
                     {/* 向上箭头 - 切换到更新的版本 */}
                     <button
-                        className={`${styles.navButton} ${styles.navButtonUp}`}
+                        className={styles.navButton}
                         onClick={handleNewerVersion}
                         disabled={selectedIndex === 0 || referenceVersions.length === 0}
                         title="更新的版本"
                         aria-label="更新的版本"
-                    />
+                    >
+                        <ArrowUpIcon />
+                    </button>
 
                     <select
                         className={styles.versionSelect}
@@ -280,12 +283,14 @@ const VersionViewer: FC<VersionViewerProps> = () => {
 
                     {/* 向下箭头 - 切换到更旧的版本 */}
                     <button
-                        className={`${styles.navButton} ${styles.navButtonDown}`}
+                        className={styles.navButton}
                         onClick={handleOlderVersion}
                         disabled={selectedIndex >= referenceVersions.length - 1 || referenceVersions.length === 0}
                         title="更旧的版本"
                         aria-label="更旧的版本"
-                    />
+                    >
+                        <ArrowDownIcon />
+                    </button>
                 </div>
             </div>
 
