@@ -19,7 +19,7 @@ const API_TOKENS = new Set();
 function generateToken() {
   const token = crypto.randomBytes(16).toString('hex');
   API_TOKENS.add(token);
-  setTimeout(() => API_TOKENS.delete(token), 5 * 60 * 1000);
+  setTimeout(() => API_TOKENS.delete(token), 10 * 60 * 1000);
   return token;
 }
 
