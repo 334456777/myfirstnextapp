@@ -247,6 +247,9 @@ app.get('/api/image/versions', async (req, res) => {
     const versions = await getImageVersionIds(key);
     if (versions.length === 0) return res.status(404).json({ success: false, error: 'No versions found' });
 
+    // 版本列表缓存半天 (12小时 = 43200秒)
+    res.setHeader('Cache-Control', 'public, max-age=43200');
+
     res.json({
       success: true,
       data: {
