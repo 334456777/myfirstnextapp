@@ -251,13 +251,12 @@ const VersionViewer: FC<VersionViewerProps> = () => {
                 <div className={styles.versionNavigation}>
                     {/* 向上箭头 - 切换到更新的版本 */}
                     <button
-                        className={styles.navButton}
+                        className={`${styles.navButton} ${styles.navButtonUp}`}
                         onClick={handleNewerVersion}
                         disabled={selectedIndex === 0 || referenceVersions.length === 0}
                         title="更新的版本"
-                    >
-                        ↑
-                    </button>
+                        aria-label="更新的版本"
+                    />
 
                     <select
                         className={styles.versionSelect}
@@ -281,13 +280,12 @@ const VersionViewer: FC<VersionViewerProps> = () => {
 
                     {/* 向下箭头 - 切换到更旧的版本 */}
                     <button
-                        className={styles.navButton}
+                        className={`${styles.navButton} ${styles.navButtonDown}`}
                         onClick={handleOlderVersion}
                         disabled={selectedIndex >= referenceVersions.length - 1 || referenceVersions.length === 0}
                         title="更旧的版本"
-                    >
-                        ↓
-                    </button>
+                        aria-label="更旧的版本"
+                    />
                 </div>
             </div>
 
