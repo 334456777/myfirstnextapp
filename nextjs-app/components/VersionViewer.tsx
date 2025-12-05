@@ -26,6 +26,8 @@ interface SingleImagePanelProps {
     onImageReady: (key: string) => void;
     // 父组件控制是否显示图片
     shouldShow: boolean;
+    // 通知父组件需要刷新 token（流中断时）
+    onTokenExpired: () => void;
 }
 
 const SingleImagePanel: FC<SingleImagePanelProps> = ({
@@ -33,7 +35,8 @@ const SingleImagePanel: FC<SingleImagePanelProps> = ({
     targetVersionId,
     onVersionsLoaded,
     onImageReady,
-    shouldShow
+    shouldShow,
+    onTokenExpired
 }) => {
     // === UI State ===
     const [currentImageUrl, setCurrentImageUrl] = useState('');
@@ -147,6 +150,8 @@ const SingleImagePanel: FC<SingleImagePanelProps> = ({
                         onError={() => {
                             setErrorMessage('流中断');
                             setShowSlowLoading(false);
+                            // 通知父组件 token 可能过期，需要刷新
+                            onTokenExpired();
                         }}
                     />
                 )}
@@ -176,21 +181,16 @@ const VersionViewer: FC<VersionViewerProps> = () => {
     // 所有图片都加载完成时，统一显示
     const allImagesReady = IMAGE_KEYS.every(key => readyImages.has(key));
 
-    // 每 4 分钟自动刷新一次，获取新的 token
-    useEffect(() => {
-        const REFRESH_INTERVAL = 4 * 60 * 1000; // 4 分钟
-        const timer = setInterval(() => {
-            console.log('[VersionViewer] 自动刷新 token...');
-            setRefreshKey(prev => prev + 1);
-        }, REFRESH_INTERVAL);
-
-        return () => clearInterval(timer);
-    }, []);
-
     // 当版本切换时，重置加载状态
     useEffect(() => {
         setReadyImages(new Set());
     }, [selectedIndex, refreshKey]);
+
+    // 回调：当流中断（token 过期）时，刷新所有图片
+    const handleTokenExpired = useCallback(() => {
+        console.log('[VersionViewer] Token 过期，重新请求...');
+        setRefreshKey(prev => prev + 1);
+    }, []);
 
     // 回调：子组件加载完数据后，把版本表注册上来
     const handleVersionsLoaded = useCallback((key: string, versions: VersionData[]) => {
@@ -302,6 +302,7 @@ const VersionViewer: FC<VersionViewerProps> = () => {
                             onVersionsLoaded={handleVersionsLoaded}
                             onImageReady={handleImageReady}
                             shouldShow={allImagesReady}
+                            onTokenExpired={handleTokenExpired}
                         />
                     );
                 })}
