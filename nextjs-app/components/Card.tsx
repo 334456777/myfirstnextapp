@@ -1,11 +1,11 @@
 'use client';
 
-import { FC } from 'react';
+import { FC, ReactNode } from 'react';
 import styles from './Card.module.css';
 
 interface CardProps {
     id: string;
-    icon: string;
+    icon: string | ReactNode;
     title: string;
     type: string;
     data: any;

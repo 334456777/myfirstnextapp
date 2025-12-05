@@ -15,10 +15,12 @@
   opacity: 1;
   max-height: 100px;
   overflow: hidden;
+  /* 设置变换原点为中心 */
+  transform-origin: center center;
 }
 
 .card:hover {
-  transform: translateX(5px);
+  transform: scale(1.05);
   box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
   border-color: #fbbf24;
   background: rgba(255, 255, 255, 1);

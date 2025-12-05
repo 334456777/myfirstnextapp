@@ -4,6 +4,7 @@ import { FC, useState, useEffect } from 'react';
 import Card from './Card';
 import styles from './Sidebar.module.css';
 import { sidebarCards } from '@/lib/sidebar';
+import { WeatherIcon, LogIcon, ErrorLogIcon, ImageIcon } from './icons';
 
 interface SidebarProps {
     activeCardId: string | null;
@@ -57,21 +58,43 @@ const Sidebar: FC<SidebarProps> = ({
         }
     }, [initialVisibleCards]);
 
+    // 根据卡片类型和状态获取对应图标
+    const getIcon = (card: typeof sidebarCards[0], isActive: boolean) => {
+        switch (card.type) {
+            case 'weather':
+                return <WeatherIcon isActive={isActive} />;
+            case 'version':
+                return <ImageIcon isActive={isActive} />;
+            case 'log':
+                // 根据 id 判断是常规日志还是错误日志
+                if (card.id === 'log2') {
+                    return <ErrorLogIcon />;
+                }
+                return <LogIcon isActive={isActive} />;
+            default:
+                return card.icon;
+        }
+    };
+
     return (
         <aside className={styles.sidebar}>
             <div className={styles.buttonContainer}>
                 {sidebarCards
                     .filter(card => visibleCards.includes(card.id))
-                    .map((card) => (
-                        <Card
-                            key={card.id}
-                            {...card}
-                            isActive={activeCardId === card.id}
-                            onMouseEnter={() => onCardEnter(card.type, card.data, card.displayTitle, card.id)}
-                            onMouseLeave={onCardLeave}
-                            onClick={() => onCardClick(card.type, card.data, card.displayTitle, card.id)}
-                        />
-                    ))}
+                    .map((card) => {
+                        const isActive = activeCardId === card.id;
+                        return (
+                            <Card
+                                key={card.id}
+                                {...card}
+                                icon={getIcon(card, isActive)}
+                                isActive={isActive}
+                                onMouseEnter={() => onCardEnter(card.type, card.data, card.displayTitle, card.id)}
+                                onMouseLeave={onCardLeave}
+                                onClick={() => onCardClick(card.type, card.data, card.displayTitle, card.id)}
+                            />
+                        );
+                    })}
             </div>
         </aside>
     );
