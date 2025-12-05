@@ -28,10 +28,46 @@
   backdrop-filter: blur(5px);
 }
 
-/* === 右侧下拉框 === */
+/* === 导航容器 === */
 .versionNavigation {
   display: flex;
-  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  gap: 20px;
+}
+
+/* === 版本切换按钮 === */
+.navButton {
+  width: 50px;
+  height: 25px;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  border: none;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.3);
+  font-size: 20px;
+  color: white;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+}
+
+.navButton:hover:not(:disabled) {
+  transform: scale(1.05);
+}
+
+.navButton:active:not(:disabled) {
+  transform: scale(0.95);
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.navButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .versionSelect {

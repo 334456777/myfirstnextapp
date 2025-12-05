@@ -193,11 +193,35 @@ const VersionViewer: FC<VersionViewerProps> = () => {
     // 假设三张图的版本数量和时间是对应的
     const referenceVersions = versionRegistry[IMAGE_KEYS[0]] || [];
 
+    // 切换到更新的版本（索引减小）
+    const handleNewerVersion = () => {
+        if (selectedIndex > 0) {
+            setSelectedIndex(prev => prev - 1);
+        }
+    };
+
+    // 切换到更旧的版本（索引增大）
+    const handleOlderVersion = () => {
+        if (selectedIndex < referenceVersions.length - 1) {
+            setSelectedIndex(prev => prev + 1);
+        }
+    };
+
     return (
         <div className={styles.versionViewer}>
             {/* 顶部控制栏 */}
             <div className={styles.versionInfo}>
                 <div className={styles.versionNavigation}>
+                    {/* 向上箭头 - 切换到更新的版本 */}
+                    <button
+                        className={styles.navButton}
+                        onClick={handleNewerVersion}
+                        disabled={selectedIndex === 0 || referenceVersions.length === 0}
+                        title="更新的版本"
+                    >
+                        ↑
+                    </button>
+
                     <select
                         className={styles.versionSelect}
                         value={selectedIndex}
@@ -217,6 +241,16 @@ const VersionViewer: FC<VersionViewerProps> = () => {
                             </option>
                         ))}
                     </select>
+
+                    {/* 向下箭头 - 切换到更旧的版本 */}
+                    <button
+                        className={styles.navButton}
+                        onClick={handleOlderVersion}
+                        disabled={selectedIndex >= referenceVersions.length - 1 || referenceVersions.length === 0}
+                        title="更旧的版本"
+                    >
+                        ↓
+                    </button>
                 </div>
             </div>
 
