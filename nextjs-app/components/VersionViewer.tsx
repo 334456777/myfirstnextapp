@@ -1,6 +1,6 @@
 'use client';
 
-import { FC, useState, useEffect, useRef } from 'react';
+import { FC, useState, useEffect, useRef, useCallback } from 'react';
 import styles from './VersionViewer.module.css';
 
 // 后端基准 URL，优先使用环境变量
@@ -15,13 +15,16 @@ interface VersionData {
     lastModified: string;
 }
 
-// === 子组件：简化为 Dumb Component ===
+// === 子组件：独立处理单张图片的逻辑 ===
 interface SingleImagePanelProps {
     imageKey: string;
+    // 接收具体的 versionId，而不是通用的 selection
     targetVersionId: string;
+    // 回传自己的版本列表给父组件
+    onVersionsLoaded: (key: string, versions: VersionData[]) => void;
 }
 
-const SingleImagePanel: FC<SingleImagePanelProps> = ({ imageKey, targetVersionId }) => {
+const SingleImagePanel: FC<SingleImagePanelProps> = ({ imageKey, targetVersionId, onVersionsLoaded }) => {
     // === UI State ===
     const [currentImageUrl, setCurrentImageUrl] = useState('');
     const [isImageVisible, setIsImageVisible] = useState(false);
@@ -32,12 +35,11 @@ const SingleImagePanel: FC<SingleImagePanelProps> = ({ imageKey, targetVersionId
     const abortControllerRef = useRef<AbortController | null>(null);
     const slowLoadingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-    // 加载图片
-    useEffect(() => {
-        // 如果没有 ID，先跳过
-        if (!targetVersionId) return;
+    const loadImage = useCallback(async (verId: string) => {
+        // 如果没有 ID (比如父组件还没准备好)，先跳过
+        if (!verId) return;
 
-        // 1. 清理上一次请求
+        // 1. 清理
         if (abortControllerRef.current) abortControllerRef.current.abort();
         if (slowLoadingTimerRef.current) clearTimeout(slowLoadingTimerRef.current);
 
@@ -49,57 +51,65 @@ const SingleImagePanel: FC<SingleImagePanelProps> = ({ imageKey, targetVersionId
         setShowSlowLoading(false);
         setErrorMessage('');
 
-        // 3. 启动 Loading 计时器 (500ms 阈值)
+        // 3. 启动计时器
         slowLoadingTimerRef.current = setTimeout(() => {
             if (!controller.signal.aborted) {
                 setShowSlowLoading(true);
             }
         }, 500);
 
-        // 4. 准备参数并立即发起请求
+        // 准备参数
         const params = new URLSearchParams({ key: imageKey });
-        if (targetVersionId !== 'latest') {
-            params.append('versionId', targetVersionId);
-        }
+        if (verId !== 'latest') params.append('versionId', verId);
 
-        const fetchImage = async () => {
-            try {
-                const response = await fetch(`${BACKEND_URL}/api/image?${params.toString()}`, {
-                    signal: controller.signal
-                });
-                const fetchResult = await response.json();
+        try {
+            const response = await fetch(`${BACKEND_URL}/api/image?${params.toString()}`, {
+                signal: controller.signal
+            });
+            const fetchResult = await response.json();
 
-                if (controller.signal.aborted) return;
+            if (controller.signal.aborted) return;
 
-                if (fetchResult.success) {
-                    setCurrentImageUrl(fetchResult.data.imageUrl);
+            if (fetchResult.success) {
+                // 成功加载后，回传版本信息给父组件进行匹配
+                if (fetchResult.data.versions) {
+                    const historyVersions = fetchResult.data.versions.filter((v: VersionData) => v.versionId !== 'latest');
+                    const latestOption = {
+                        versionId: 'latest',
+                        lastModified: fetchResult.data.lastModified || new Date().toISOString()
+                    };
+                    // 通知父组件：我是 imageKey，我的版本列表是这个
+                    onVersionsLoaded(imageKey, [latestOption, ...historyVersions]);
+                }
+
+                setCurrentImageUrl(fetchResult.data.imageUrl);
+            } else {
+                throw new Error(fetchResult.error || 'API Failed');
+            }
+
+        } catch (error: any) {
+            if (error.name === 'AbortError') return;
+            console.error(`Load Error (${imageKey}):`, error);
+            if (!controller.signal.aborted) {
+                // 如果是 Version not found，可能是索引对其问题，显示更友好的错误
+                if (error.message.includes('Version not found')) {
+                    setErrorMessage('无此版本数据');
                 } else {
-                    throw new Error(fetchResult.error || 'API Failed');
-                }
-            } catch (error: any) {
-                if (error.name === 'AbortError') return;
-                console.error(`Load Error (${imageKey}):`, error);
-                if (!controller.signal.aborted) {
-                    if (error.message?.includes('Version not found')) {
-                        setErrorMessage('无此版本数据');
-                    } else {
-                        setErrorMessage('加载失败');
-                    }
-                }
-            } finally {
-                if (slowLoadingTimerRef.current) {
-                    clearTimeout(slowLoadingTimerRef.current);
+                    setErrorMessage('加载失败');
                 }
             }
-        };
+            if (slowLoadingTimerRef.current) clearTimeout(slowLoadingTimerRef.current);
+        }
+    }, [imageKey, onVersionsLoaded]);
 
-        fetchImage();
-
+    // 监听目标版本 ID 变化
+    useEffect(() => {
+        loadImage(targetVersionId);
         return () => {
             if (abortControllerRef.current) abortControllerRef.current.abort();
             if (slowLoadingTimerRef.current) clearTimeout(slowLoadingTimerRef.current);
         };
-    }, [imageKey, targetVersionId]);
+    }, [targetVersionId, loadImage]);
 
     const handleImageLoad = () => {
         if (slowLoadingTimerRef.current) clearTimeout(slowLoadingTimerRef.current);
@@ -114,9 +124,8 @@ const SingleImagePanel: FC<SingleImagePanelProps> = ({ imageKey, targetVersionId
                 {showSlowLoading && !errorMessage && (
                     <div className={styles.loading}>正在缓冲...</div>
                 )}
-                {errorMessage && (
-                    <div style={{ color: 'red', padding: '20px', fontSize: '14px' }}>{errorMessage}</div>
-                )}
+                {errorMessage && <div style={{ color: 'red', padding: '20px', fontSize: '14px' }}>{errorMessage}</div>}
+
                 {currentImageUrl && !errorMessage && (
                     <img
                         src={currentImageUrl}
@@ -135,55 +144,54 @@ const SingleImagePanel: FC<SingleImagePanelProps> = ({ imageKey, targetVersionId
 };
 
 
-// === 主组件 (Single Source of Truth) ===
+// === 主组件 ===
 const VersionViewer: FC<VersionViewerProps> = () => {
     const IMAGE_KEYS = ['shm.jpg', 'srf.jpg', 'sra.jpg'];
-    const REFERENCE_KEY = IMAGE_KEYS[0]; // 使用 shm.jpg 作为版本列表的参考源
 
-    // === State ===
-    const [versions, setVersions] = useState<VersionData[]>([]);
-    const [currentVersionId, setCurrentVersionId] = useState<string>('latest');
-    const [isLoading, setIsLoading] = useState(true);
+    // === Data State ===
+    // 存储所有图片的版本表：Record<文件名, 版本数组>
+    const [versionRegistry, setVersionRegistry] = useState<Record<string, VersionData[]>>({});
 
-    // 挂载时统一请求一次 shm.jpg 的版本数据
+    // 改为存储选中的索引（第几个版本），而不是具体的 ID
+    const [selectedIndex, setSelectedIndex] = useState<number>(0);
+
+    // 强制刷新计数器，用于触发子组件重新请求
+    const [refreshKey, setRefreshKey] = useState<number>(0);
+
+    // 每 5 分钟自动刷新一次，获取新的 token
     useEffect(() => {
-        const fetchVersions = async () => {
-            try {
-                const params = new URLSearchParams({ key: REFERENCE_KEY });
-                const response = await fetch(`${BACKEND_URL}/api/image?${params.toString()}`);
-                const result = await response.json();
+        const REFRESH_INTERVAL = 5 * 60 * 1000; // 5 分钟
+        const timer = setInterval(() => {
+            console.log('[VersionViewer] 自动刷新 token...');
+            setRefreshKey(prev => prev + 1);
+        }, REFRESH_INTERVAL);
 
-                if (result.success && result.data.versions) {
-                    const historyVersions = result.data.versions.filter(
-                        (v: VersionData) => v.versionId !== 'latest'
-                    );
-                    const latestOption: VersionData = {
-                        versionId: 'latest',
-                        lastModified: result.data.lastModified || new Date().toISOString()
-                    };
-                    setVersions([latestOption, ...historyVersions]);
-                }
-            } catch (error) {
-                console.error('Failed to fetch versions:', error);
-            } finally {
-                setIsLoading(false);
+        return () => clearInterval(timer);
+    }, []);
+
+    // 回调：子组件加载完数据后，把版本表注册上来
+    const handleVersionsLoaded = useCallback((key: string, versions: VersionData[]) => {
+        setVersionRegistry(prev => {
+            // 如果已经存过且长度一致（简单防抖），就不更新了
+            if (prev[key] && prev[key].length === versions.length && prev[key][0].versionId === versions[0].versionId) {
+                return prev;
             }
-        };
-
-        fetchVersions();
-    }, [REFERENCE_KEY]);
+            return { ...prev, [key]: versions };
+        });
+    }, []);
 
     const handleVersionChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-        setCurrentVersionId(event.target.value);
+        setSelectedIndex(Number(event.target.value));
     };
 
     const formatDate = (dateString: string) => {
-        try {
-            return new Date(dateString).toLocaleDateString('zh-CN');
-        } catch {
-            return dateString;
-        }
+        try { return new Date(dateString).toLocaleDateString('zh-CN'); }
+        catch { return dateString; }
     };
+
+    // 使用第一张图 (shm.jpg) 的版本列表作为下拉菜单的显示依据
+    // 假设三张图的版本数量和时间是对应的
+    const referenceVersions = versionRegistry[IMAGE_KEYS[0]] || [];
 
     return (
         <div className={styles.versionViewer}>
@@ -192,14 +200,16 @@ const VersionViewer: FC<VersionViewerProps> = () => {
                 <div className={styles.versionNavigation}>
                     <select
                         className={styles.versionSelect}
-                        value={currentVersionId}
+                        value={selectedIndex}
                         onChange={handleVersionChange}
-                        disabled={isLoading || versions.length === 0}
+                        // 如果第一张图的数据还没回来，暂时禁用
+                        disabled={referenceVersions.length === 0}
                     >
-                        {isLoading && <option value="latest">加载版本中...</option>}
-                        {!isLoading && versions.length === 0 && <option value="latest">无可用版本</option>}
-                        {versions.map((v, index) => (
-                            <option key={v.versionId} value={v.versionId}>
+                        {referenceVersions.length === 0 && <option value={0}>加载版本中...</option>}
+
+                        {referenceVersions.map((v, index) => (
+                            // 这里 value 绑定的是 index，不是 versionId
+                            <option key={`${v.versionId}-${index}`} value={index}>
                                 {index === 0
                                     ? `当前最新 (${formatDate(v.lastModified)})`
                                     : `历史版本 (${formatDate(v.lastModified)})`
@@ -212,13 +222,21 @@ const VersionViewer: FC<VersionViewerProps> = () => {
 
             {/* 图片堆叠区域 */}
             <div className={styles.imagesStack}>
-                {IMAGE_KEYS.map((key) => (
-                    <SingleImagePanel
-                        key={key}
-                        imageKey={key}
-                        targetVersionId={currentVersionId}
-                    />
-                ))}
+                {IMAGE_KEYS.map((key) => {
+                    // 核心逻辑：根据当前选中的 index，去注册表中找该图对应的 versionId
+                    // 如果找不到（比如这张图版本少），回退到 'latest'
+                    const myVersions = versionRegistry[key];
+                    const myTargetId = myVersions?.[selectedIndex]?.versionId || 'latest';
+
+                    return (
+                        <SingleImagePanel
+                            key={`${key}-${refreshKey}`}
+                            imageKey={key}
+                            targetVersionId={myTargetId}
+                            onVersionsLoaded={handleVersionsLoaded}
+                        />
+                    );
+                })}
             </div>
         </div>
     );
