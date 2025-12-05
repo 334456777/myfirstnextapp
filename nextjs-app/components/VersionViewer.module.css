@@ -3,11 +3,13 @@
 .versionViewer {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  min-height: 100%;
   font-family: Segoe UI, Tahoma, Geneva, Verdana, sans-serif;
   background-color: #ffffff;
   /* 给整体一个浅灰背景，突出图片卡片 */
   padding-bottom: 50px;
+  overflow-y: hidden;
+  overflow-x: hidden;
 }
 
 /* === 顶部控制栏 === */
