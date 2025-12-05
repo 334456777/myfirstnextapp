@@ -158,9 +158,9 @@ const VersionViewer: FC<VersionViewerProps> = () => {
     // 强制刷新计数器，用于触发子组件重新请求
     const [refreshKey, setRefreshKey] = useState<number>(0);
 
-    // 每 5 分钟自动刷新一次，获取新的 token
+    // 每 4 分钟自动刷新一次，获取新的 token
     useEffect(() => {
-        const REFRESH_INTERVAL = 5 * 60 * 1000; // 5 分钟
+        const REFRESH_INTERVAL = 4 * 60 * 1000; // 4 分钟
         const timer = setInterval(() => {
             console.log('[VersionViewer] 自动刷新 token...');
             setRefreshKey(prev => prev + 1);
