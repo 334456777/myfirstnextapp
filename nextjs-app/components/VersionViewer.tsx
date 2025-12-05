@@ -22,12 +22,22 @@ interface SingleImagePanelProps {
     targetVersionId: string;
     // 回传自己的版本列表给父组件
     onVersionsLoaded: (key: string, versions: VersionData[]) => void;
+    // 通知父组件图片已加载完成
+    onImageReady: (key: string) => void;
+    // 父组件控制是否显示图片
+    shouldShow: boolean;
 }
 
-const SingleImagePanel: FC<SingleImagePanelProps> = ({ imageKey, targetVersionId, onVersionsLoaded }) => {
+const SingleImagePanel: FC<SingleImagePanelProps> = ({
+    imageKey,
+    targetVersionId,
+    onVersionsLoaded,
+    onImageReady,
+    shouldShow
+}) => {
     // === UI State ===
     const [currentImageUrl, setCurrentImageUrl] = useState('');
-    const [isImageVisible, setIsImageVisible] = useState(false);
+    const [isImageLoaded, setIsImageLoaded] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [showSlowLoading, setShowSlowLoading] = useState(false);
 
@@ -47,7 +57,7 @@ const SingleImagePanel: FC<SingleImagePanelProps> = ({ imageKey, targetVersionId
         abortControllerRef.current = controller;
 
         // 2. 状态重置
-        setIsImageVisible(false);
+        setIsImageLoaded(false);
         setShowSlowLoading(false);
         setErrorMessage('');
 
@@ -114,7 +124,9 @@ const SingleImagePanel: FC<SingleImagePanelProps> = ({ imageKey, targetVersionId
     const handleImageLoad = () => {
         if (slowLoadingTimerRef.current) clearTimeout(slowLoadingTimerRef.current);
         setShowSlowLoading(false);
-        setIsImageVisible(true);
+        setIsImageLoaded(true);
+        // 通知父组件这张图片已加载完成
+        onImageReady(imageKey);
     };
 
     return (
@@ -130,7 +142,7 @@ const SingleImagePanel: FC<SingleImagePanelProps> = ({ imageKey, targetVersionId
                     <img
                         src={currentImageUrl}
                         alt={`${imageKey} Preview`}
-                        className={`${styles.versionImage} ${isImageVisible ? styles.versionImageVisible : ''}`}
+                        className={`${styles.versionImage} ${isImageLoaded && shouldShow ? styles.versionImageVisible : ''}`}
                         onLoad={handleImageLoad}
                         onError={() => {
                             setErrorMessage('流中断');
@@ -158,6 +170,12 @@ const VersionViewer: FC<VersionViewerProps> = () => {
     // 强制刷新计数器，用于触发子组件重新请求
     const [refreshKey, setRefreshKey] = useState<number>(0);
 
+    // 追踪每张图片的加载状态
+    const [readyImages, setReadyImages] = useState<Set<string>>(new Set());
+
+    // 所有图片都加载完成时，统一显示
+    const allImagesReady = IMAGE_KEYS.every(key => readyImages.has(key));
+
     // 每 4 分钟自动刷新一次，获取新的 token
     useEffect(() => {
         const REFRESH_INTERVAL = 4 * 60 * 1000; // 4 分钟
@@ -169,14 +187,28 @@ const VersionViewer: FC<VersionViewerProps> = () => {
         return () => clearInterval(timer);
     }, []);
 
+    // 当版本切换时，重置加载状态
+    useEffect(() => {
+        setReadyImages(new Set());
+    }, [selectedIndex, refreshKey]);
+
     // 回调：子组件加载完数据后，把版本表注册上来
     const handleVersionsLoaded = useCallback((key: string, versions: VersionData[]) => {
         setVersionRegistry(prev => {
-            // 如果已经存过且长度一致（简单防抖），就不更新了
-            if (prev[key] && prev[key].length === versions.length && prev[key][0].versionId === versions[0].versionId) {
+            // 如果已经有版本数据，不再更新（只首次加载时获取版本列表）
+            if (prev[key] && prev[key].length > 0) {
                 return prev;
             }
             return { ...prev, [key]: versions };
+        });
+    }, []);
+
+    // 回调：子组件图片加载完成
+    const handleImageReady = useCallback((key: string) => {
+        setReadyImages(prev => {
+            const newSet = new Set(prev);
+            newSet.add(key);
+            return newSet;
         });
     }, []);
 
@@ -264,10 +296,12 @@ const VersionViewer: FC<VersionViewerProps> = () => {
 
                     return (
                         <SingleImagePanel
-                            key={`${key}-${refreshKey}`}
+                            key={`${key}-${refreshKey}-${selectedIndex}`}
                             imageKey={key}
                             targetVersionId={myTargetId}
                             onVersionsLoaded={handleVersionsLoaded}
+                            onImageReady={handleImageReady}
+                            shouldShow={allImagesReady}
                         />
                     );
                 })}
