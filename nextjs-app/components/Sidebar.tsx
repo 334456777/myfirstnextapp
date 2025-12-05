@@ -68,7 +68,7 @@ const Sidebar: FC<SidebarProps> = ({
             case 'log':
                 // 根据 id 判断是常规日志还是错误日志
                 if (card.id === 'log2') {
-                    return <ErrorLogIcon />;
+                    return <ErrorLogIcon isActive={isActive} />;
                 }
                 return <LogIcon isActive={isActive} />;
             default:

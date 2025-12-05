@@ -4,30 +4,29 @@ import { FC } from 'react';
 
 interface ErrorLogIconProps {
     className?: string;
+    /**
+     * 控制图标状态
+     * true: 激活状态 (蓝色 #007aff)
+     * false: 未激活状态 (黑色 85%透明度)
+     */
+    isActive?: boolean;
 }
 
-const ErrorLogIcon: FC<ErrorLogIconProps> = ({ className }) => {
+const ErrorLogIcon: FC<ErrorLogIconProps> = ({ className, isActive = false }) => {
     return (
         <svg
             className={className}
-            viewBox="0 0 20.8301 18.6621"
+            viewBox="0 0 20.2832 19.9316"
             xmlns="http://www.w3.org/2000/svg"
             width="40"
             height="36"
         >
-            <defs>
-                <linearGradient id="errorBgGradient" x1="5" x2="5" y2="18.5547" gradientUnits="userSpaceOnUse">
-                    <stop offset="0" stopColor="#ffcc00" />
-                    <stop offset="1" stopColor="#e2b500" />
-                </linearGradient>
-                <linearGradient id="errorFgGradient" x1="5" x2="5" y2="18.5547" gradientUnits="userSpaceOnUse">
-                    <stop offset="0" stopColor="white" />
-                    <stop offset="1" stopColor="#e2e2e2" />
-                </linearGradient>
-            </defs>
             <g>
-                <path d="M2.66602 18.5547L17.8027 18.5547C19.4629 18.5547 20.4688 17.4023 20.4688 15.9082C20.4688 15.4492 20.332 14.9707 20.0879 14.541L12.5098 1.33789C12.002 0.449219 11.1328 0 10.2344 0C9.33594 0 8.45703 0.449219 7.95898 1.33789L0.380859 14.541C0.117188 14.9805 0 15.4492 0 15.9082C0 17.4023 1.00586 18.5547 2.66602 18.5547Z" fill="url(#errorBgGradient)" />
-                <path d="M10.2441 12.0312C9.73633 12.0312 9.45312 11.7383 9.44336 11.2207L9.31641 5.9082C9.30664 5.39062 9.6875 5.01953 10.2344 5.01953C10.7617 5.01953 11.1719 5.40039 11.1621 5.91797L11.0156 11.2207C11.0059 11.748 10.7227 12.0312 10.2441 12.0312ZM10.2441 15.3027C9.6582 15.3027 9.15039 14.834 9.15039 14.2578C9.15039 13.6719 9.64844 13.2031 10.2441 13.2031C10.8301 13.2031 11.3281 13.6621 11.3281 14.2578C11.3281 14.8438 10.8203 15.3027 10.2441 15.3027Z" fill="url(#errorFgGradient)" />
+                <path
+                    d="M15.957 17.002L16.9922 15.9668L3.97461 2.94922L2.93945 3.98438ZM9.96094 19.9219C15.459 19.9219 19.9219 15.459 19.9219 9.96094C19.9219 4.46289 15.459 0 9.96094 0C4.46289 0 0 4.46289 0 9.96094C0 15.459 4.46289 19.9219 9.96094 19.9219ZM9.96094 18.2617C5.37109 18.2617 1.66016 14.5508 1.66016 9.96094C1.66016 5.37109 5.37109 1.66016 9.96094 1.66016C14.5508 1.66016 18.2617 5.37109 18.2617 9.96094C18.2617 14.5508 14.5508 18.2617 9.96094 18.2617Z"
+                    fill={isActive ? "#007aff" : "black"}
+                    fillOpacity={isActive ? 1 : 0.85}
+                />
             </g>
         </svg>
     );
