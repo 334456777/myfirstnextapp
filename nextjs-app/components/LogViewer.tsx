@@ -1,24 +1,42 @@
 'use client';
 
-import { FC, useEffect, useState } from 'react';
+import { FC, useEffect, useState, useMemo } from 'react';
 import styles from './LogViewer.module.css';
 
 interface LogViewerProps {
     url: string;
 }
 
+interface ParsedLogs {
+    latestDate: string;
+    latestGroups: string[][];
+    historyDates: string[];
+    allGroups: { [key: string]: string[] };
+    shouldHideButton: boolean;
+    isEmpty: boolean;
+}
+
 const LogViewer: FC<LogViewerProps> = ({ url }) => {
     const [logContent, setLogContent] = useState<string>('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [showHistory, setShowHistory] = useState(false);
 
     useEffect(() => {
         const fetchLog = async () => {
             setLoading(true);
             setError(null);
             try {
-                const response = await fetch(url);
-                if (!response.ok) throw new Error('Failed to load log');
+                const response = await fetch(url, {
+                    // 'no-cache' 并不意味着不缓存，而是意味着：
+                    // "在每次使用缓存前，必须先发请求给服务器确认文件是否修改过 (ETag/Last-Modified)"
+                    // 1. 如果没变 -> 服务器返回 304，浏览器读取本地缓存 (0KB 流量)
+                    // 2. 如果变了 -> 服务器返回 200，浏览器下载新内容
+                    cache: 'no-cache',
+                });
+
+                if (!response.ok) throw new Error(`Failed to load log: ${response.status}`);
+
                 const text = await response.text();
                 setLogContent(text);
             } catch (err: any) {
@@ -31,12 +49,15 @@ const LogViewer: FC<LogViewerProps> = ({ url }) => {
         fetchLog();
     }, [url]);
 
-    const processLogContent = (logText: string) => {
-        if (!logText || !logText.trim()) {
-            return <div className={styles.logContent}>日志为空</div>;
+    const parsedData: ParsedLogs = useMemo(() => {
+        if (!logContent || !logContent.trim()) {
+            return {
+                latestDate: '', latestGroups: [], historyDates: [],
+                allGroups: {}, shouldHideButton: false, isEmpty: true
+            };
         }
 
-        const lines = logText.split('\n');
+        const lines = logContent.split('\n');
         const firstLine = lines[0].trim();
         const shouldHideButton = firstLine === '#';
 
@@ -65,89 +86,90 @@ const LogViewer: FC<LogViewerProps> = ({ url }) => {
         const sortedDates = Object.keys(dateGroups).sort().reverse();
 
         if (sortedDates.length === 0) {
-            return <div className={styles.logContent}>{logText}</div>;
+            return {
+                latestDate: '', latestGroups: [], historyDates: [],
+                allGroups: {}, shouldHideButton: false, isEmpty: false
+            };
         }
 
         const latestDate = sortedDates[0];
         const latestLogs = dateGroups[latestDate];
 
-        // 将最新日志按 <-- 标记分组
-        const groupLatestLogs = (logs: string[]) => {
-            const groups: string[][] = [];
-            let currentGroup: string[] = [];
-
-            for (const line of logs) {
-                if (line.includes('<--')) {
-                    if (currentGroup.length > 0) {
-                        groups.push([...currentGroup]);
-                        currentGroup = [line];
-                    } else {
-                        currentGroup.push(line);
-                    }
+        const groups: string[][] = [];
+        let currentGroup: string[] = [];
+        for (const line of latestLogs) {
+            if (line.includes('<--')) {
+                if (currentGroup.length > 0) {
+                    groups.push([...currentGroup]);
+                    currentGroup = [line];
                 } else {
                     currentGroup.push(line);
                 }
+            } else {
+                currentGroup.push(line);
             }
+        }
+        if (currentGroup.length > 0) groups.push(currentGroup);
+        const latestGroups = groups.reverse();
 
-            if (currentGroup.length > 0) {
-                groups.push(currentGroup);
-            }
-
-            return groups.reverse(); // 反转以显示最新的在前
+        return {
+            latestDate,
+            latestGroups,
+            historyDates: sortedDates.slice(1),
+            allGroups: dateGroups,
+            shouldHideButton,
+            isEmpty: false
         };
 
-        const latestLogGroups = groupLatestLogs(latestLogs);
-
-        return (
-            <div className={styles.logContent}>
-                <div className={styles.logBody}>
-                    <div className={styles.dateSectionLabel}>Latest Logs ({latestDate})</div>
-
-                    {latestLogGroups.map((group, groupIndex) => (
-                        <div key={groupIndex} className={styles.latestLogCard}>
-                            {group.map((line, lineIndex) => (
-                                <div key={lineIndex}>{line}</div>
-                            ))}
-                        </div>
-                    ))}
-
-                    {sortedDates.length > 1 && !shouldHideButton && (
-                        <>
-                            <button className={styles.historyToggleBtn} onClick={(e) => {
-                                const historyLogs = e.currentTarget.nextElementSibling as HTMLElement;
-                                if (historyLogs) {
-                                    const isHidden = historyLogs.style.display === 'none';
-                                    historyLogs.style.display = isHidden ? 'block' : 'none';
-                                    const icon = e.currentTarget.querySelector(`.${styles.toggleIcon}`);
-                                    if (icon) {
-                                        icon.textContent = isHidden ? '▲' : '▼';
-                                    }
-                                }
-                            }}>
-                                <span className={styles.toggleIcon}>▼</span>
-                                <span className={styles.toggleText}>View History ({sortedDates.length - 1} dates)</span>
-                            </button>
-                            <div className={styles.historyLogs} style={{ display: 'none' }}>
-                                {sortedDates.slice(1).map((date) => (
-                                    <div key={date} className={styles.historySection}>
-                                        <div className={styles.logDateLabel}>{date}</div>
-                                        {dateGroups[date].map((line, idx) => (
-                                            <div key={idx}>{line}</div>
-                                        ))}
-                                    </div>
-                                ))}
-                            </div>
-                        </>
-                    )}
-                </div>
-            </div>
-        );
-    };
+    }, [logContent]);
 
     if (loading) return <div className={styles.loading}>Loading...</div>;
     if (error) return <div className={styles.error}>Load failed: {error}</div>;
 
-    return <>{processLogContent(logContent)}</>;
+    if (parsedData.isEmpty && !parsedData.latestDate) {
+        return <div className={styles.logContent}>{logContent || "日志为空"}</div>;
+    }
+
+    return (
+        <div className={styles.logContent}>
+            <div className={styles.logBody}>
+                <div className={styles.dateSectionLabel}>Latest Logs ({parsedData.latestDate})</div>
+
+                {parsedData.latestGroups.map((group, groupIndex) => (
+                    <div key={groupIndex} className={styles.latestLogCard}>
+                        {group.map((line, lineIndex) => (
+                            <div key={lineIndex}>{line}</div>
+                        ))}
+                    </div>
+                ))}
+
+                {parsedData.historyDates.length > 0 && !parsedData.shouldHideButton && (
+                    <button
+                        className={styles.historyToggleBtn}
+                        onClick={() => setShowHistory(!showHistory)}
+                    >
+                        <span className={styles.toggleIcon}>{showHistory ? '▲' : '▼'}</span>
+                        <span className={styles.toggleText}>
+                            {showHistory ? 'Hide History' : `View History (${parsedData.historyDates.length} dates)`}
+                        </span>
+                    </button>
+                )}
+
+                {showHistory && (
+                    <div className={styles.historyLogs}>
+                        {parsedData.historyDates.map((date) => (
+                            <div key={date} className={styles.historySection}>
+                                <div className={styles.logDateLabel}>{date}</div>
+                                {parsedData.allGroups[date].map((line, idx) => (
+                                    <div key={idx}>{line}</div>
+                                ))}
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
 };
 
 export default LogViewer;
