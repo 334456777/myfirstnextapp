@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import styles from './RotateButton.module.css';
+import { RotateIcon, BackIcon } from './icons';
 
 export default function RotateButton() {
     const [isRotated, setIsRotated] = useState(false);
@@ -42,7 +43,7 @@ export default function RotateButton() {
             title="旋转屏幕"
             type="button"
         >
-            {isRotated ? '↩️' : '🔄'}
+            {isRotated ? <BackIcon className={styles.icon} /> : <RotateIcon className={styles.icon} />}
         </button>
     );
 }

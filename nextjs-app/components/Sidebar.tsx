@@ -3,7 +3,7 @@
 import { FC, useState, useEffect, useCallback } from 'react';
 import Card from './Card';
 import styles from './Sidebar.module.css';
-import { sidebarCards } from '@/lib/sidebar';
+import { sidebarCards } from '@/lib/constants';
 import { WeatherIcon, LogIcon, ErrorLogIcon, ImageIcon } from './icons';
 
 interface SidebarProps {
@@ -84,9 +84,9 @@ const Sidebar: FC<SidebarProps> = ({
         <aside className={styles.sidebar}>
             <div className={styles.buttonContainer}>
                 {sidebarCards
-                    .filter(card => visibleCards.includes(card.id))
-                    .map((card) => {
-                        const isActive = activeCardId === card.id;
+                    .filter((card: typeof sidebarCards[0]) => visibleCards.includes(card.id))
+                    .map((card: typeof sidebarCards[0]) => {
+                        const isActive: boolean = activeCardId === card.id;
                         return (
                             <Card
                                 key={card.id}
