@@ -8,8 +8,18 @@
   background-color: #ffffff;
   /* 给整体一个浅灰背景，突出图片卡片 */
   padding-bottom: 50px;
-  overflow-y: hidden;
+  overflow-y: auto;
   overflow-x: hidden;
+  /* 隐藏滚动条但保持滚动功能 */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+/* 隐藏滚动条但保持滚动功能 - Webkit浏览器 */
+.versionViewer::-webkit-scrollbar {
+  display: none;
 }
 
 /* === 顶部控制栏 === */

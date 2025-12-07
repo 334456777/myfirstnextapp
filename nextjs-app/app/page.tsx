@@ -1,8 +1,9 @@
+import type { Metadata } from 'next';
 import MainContent from '@/components/MainContent';
 import { getWeatherData } from '@/lib/weather';
 import { getVisibleCards } from '@/lib/sidebar';
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'yusteven',
   description: '实时监控系统日志和图像查看器。包含常规日志、错误日志查看功能, 舒曼共振 SHM、SRF、SRA实时监控图像显示, ECMWF欧洲气象局天气预报, 支持触摸屏和桌面设备操作。',
   keywords: '舒曼共振, SHM, SRF, SRA, sosrff, 天气预报, ECMWF',
