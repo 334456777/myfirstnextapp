@@ -55,16 +55,16 @@
 @media (max-width: 480px) {
   .card {
     min-width: 60px;
-    width: 60px;
+    width: 120px;
     height: 60px;
   }
 
   .cardIcon {
     font-size: 24px;
-    margin-bottom: 2px;
+    margin-bottom: 0;
   }
 
   .cardTitle {
-    font-size: 8px;
+    font-size: 10px;
   }
 }
