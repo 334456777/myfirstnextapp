@@ -37,14 +37,30 @@ const SingleImagePanel: FC<SingleImagePanelProps> = ({
     const [currentImageUrl, setCurrentImageUrl] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [retryCount, setRetryCount] = useState(0);
 
     const abortControllerRef = useRef<AbortController | null>(null);
+    const errorTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const retryTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+    // 清理所有定时器
+    const clearAllTimers = useCallback(() => {
+        if (errorTimerRef.current) {
+            clearTimeout(errorTimerRef.current);
+            errorTimerRef.current = null;
+        }
+        if (retryTimerRef.current) {
+            clearTimeout(retryTimerRef.current);
+            retryTimerRef.current = null;
+        }
+    }, []);
 
     const loadImage = useCallback(async (verId: string) => {
         if (!verId) return;
 
-        // 清理上一次请求
+        // 清理上一次请求和定时器
         if (abortControllerRef.current) abortControllerRef.current.abort();
+        clearAllTimers();
 
         const controller = new AbortController();
         abortControllerRef.current = controller;
@@ -77,6 +93,7 @@ const SingleImagePanel: FC<SingleImagePanelProps> = ({
 
                 setCurrentImageUrl(result.data.imageUrl);
                 setIsLoading(false);
+                setRetryCount(0); // 成功后重置重试计数
             } else {
                 throw new Error(result.error || 'API Failed');
             }
@@ -85,25 +102,69 @@ const SingleImagePanel: FC<SingleImagePanelProps> = ({
 
             console.error(`Load Error (${imageKey}):`, error);
             if (!controller.signal.aborted) {
-                setErrorMessage(error.message.includes('Version not found') ? '版本不存在' : '加载失败');
+                const isVersionError = error.message.includes('Version not found');
+                setErrorMessage(isVersionError ? '版本不存在' : '加载失败');
                 setIsLoading(false);
+
+                // 如果不是版本错误，且重试次数少于3次，自动重试
+                if (!isVersionError && retryCount < 3) {
+                    retryTimerRef.current = setTimeout(() => {
+                        setRetryCount(prev => prev + 1);
+                        loadImage(verId);
+                    }, 2000);
+                }
             }
         }
-    }, [imageKey, refreshKey, onVersionsLoaded]);
+    }, [imageKey, refreshKey, onVersionsLoaded, retryCount, clearAllTimers]);
+
+    // 处理图片加载错误（流中断）
+    const handleImageError = useCallback(() => {
+        console.warn(`[${imageKey}] 图片流中断`);
+
+        // 先显示流中断错误
+        setErrorMessage('流中断');
+        setIsLoading(false);
+
+        // 1秒后切换为加载中状态并触发重新加载
+        errorTimerRef.current = setTimeout(() => {
+            setErrorMessage('');
+            setIsLoading(true);
+
+            // 再等待1秒后触发刷新
+            retryTimerRef.current = setTimeout(() => {
+                onRequestRefresh();
+            }, 1000);
+        }, 1000);
+    }, [imageKey, onRequestRefresh]);
 
     useEffect(() => {
         loadImage(targetVersionId);
         return () => {
             if (abortControllerRef.current) abortControllerRef.current.abort();
+            clearAllTimers();
         };
-    }, [targetVersionId, refreshKey, loadImage]);
+    }, [targetVersionId, refreshKey, loadImage, clearAllTimers]);
+
+    // 获取显示的状态文本
+    const getStatusText = () => {
+        if (errorMessage) {
+            return errorMessage;
+        }
+        if (isLoading) {
+            return retryCount > 0 ? `加载中... (${retryCount}/3)` : '加载中...';
+        }
+        return '';
+    };
 
     return (
         <div className={styles.singlePanelWrapper}>
             <div className={styles.panelLabel}>
                 <span>{imageKey.split('.')[0].toUpperCase()}</span>
-                {isLoading && !errorMessage && <span className={styles.statusText}>加载中...</span>}
-                {errorMessage && <span className={styles.errorText}>{errorMessage}</span>}
+                {getStatusText() && (
+                    <span className={errorMessage ? styles.errorText : styles.statusText}>
+                        {getStatusText()}
+                    </span>
+                )}
             </div>
             <div className={styles.imageContainer}>
                 {/* 图片实体 */}
@@ -113,11 +174,21 @@ const SingleImagePanel: FC<SingleImagePanelProps> = ({
                         alt={imageKey}
                         className={styles.versionImage}
                         onLoad={() => setIsLoading(false)}
-                        onError={() => {
-                            setErrorMessage('流中断');
-                            onRequestRefresh();
-                        }}
+                        onError={handleImageError}
                     />
+                )}
+
+                {/* 当有错误且不是流中断时，显示重试按钮 */}
+                {errorMessage && errorMessage !== '流中断' && retryCount >= 3 && (
+                    <button
+                        className={styles.retryButton}
+                        onClick={() => {
+                            setRetryCount(0);
+                            loadImage(targetVersionId);
+                        }}
+                    >
+                        点击重试
+                    </button>
                 )}
             </div>
         </div>
@@ -168,6 +239,13 @@ const VersionViewer: FC<VersionViewerProps> = () => {
         } catch { return dateString; }
     };
 
+    // 获取版本标签
+    const getVersionLabel = (index: number) => {
+        if (index === 0) return '当前最新';
+        if (index === referenceVersions.length - 1) return '最早版本';
+        return '历史版本';
+    };
+
     return (
         <div className={styles.versionViewer}>
             {/* 顶部控制栏 */}
@@ -194,7 +272,7 @@ const VersionViewer: FC<VersionViewerProps> = () => {
                         {!referenceVersions.length && <option>加载版本列表中...</option>}
                         {referenceVersions.map((v, idx) => (
                             <option key={`${v.versionId}-${idx}`} value={idx}>
-                                {idx === 0 ? '当前最新' : `历史版本`} ({formatDate(v.lastModified)})
+                                {getVersionLabel(idx)} ({formatDate(v.lastModified)})
                             </option>
                         ))}
                     </select>
