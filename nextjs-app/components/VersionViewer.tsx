@@ -22,45 +22,27 @@ interface VersionData {
 interface SingleImagePanelProps {
     imageKey: string;
     targetVersionId: string;
-    refreshKey: number;
     onVersionsLoaded: (key: string, versions: VersionData[]) => void;
-    onRequestRefresh: () => void;
 }
 
 const SingleImagePanel: FC<SingleImagePanelProps> = ({
     imageKey,
     targetVersionId,
-    refreshKey,
-    onVersionsLoaded,
-    onRequestRefresh
+    onVersionsLoaded
 }) => {
     const [currentImageUrl, setCurrentImageUrl] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [retryCount, setRetryCount] = useState(0);
 
     const abortControllerRef = useRef<AbortController | null>(null);
-    const errorTimerRef = useRef<NodeJS.Timeout | null>(null);
-    const retryTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-    // 清理所有定时器
-    const clearAllTimers = useCallback(() => {
-        if (errorTimerRef.current) {
-            clearTimeout(errorTimerRef.current);
-            errorTimerRef.current = null;
-        }
-        if (retryTimerRef.current) {
-            clearTimeout(retryTimerRef.current);
-            retryTimerRef.current = null;
-        }
-    }, []);
 
     const loadImage = useCallback(async (verId: string) => {
         if (!verId) return;
 
-        // 清理上一次请求和定时器
-        if (abortControllerRef.current) abortControllerRef.current.abort();
-        clearAllTimers();
+        // 取消上一次请求
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
 
         const controller = new AbortController();
         abortControllerRef.current = controller;
@@ -69,8 +51,9 @@ const SingleImagePanel: FC<SingleImagePanelProps> = ({
         setIsLoading(true);
 
         const params = new URLSearchParams({ key: imageKey });
-        if (verId !== 'latest') params.append('versionId', verId);
-        if (refreshKey > 0) params.append('_t', String(Date.now()));
+        if (verId !== 'latest') {
+            params.append('versionId', verId);
+        }
 
         try {
             const response = await fetch(`${BACKEND_URL}/api/image?${params.toString()}`, {
@@ -83,7 +66,9 @@ const SingleImagePanel: FC<SingleImagePanelProps> = ({
             if (result.success) {
                 // 回传版本信息
                 if (result.data.versions) {
-                    const historyVersions = result.data.versions.filter((v: VersionData) => v.versionId !== 'latest');
+                    const historyVersions = result.data.versions.filter(
+                        (v: VersionData) => v.versionId !== 'latest'
+                    );
                     const latestOption = {
                         versionId: 'latest',
                         lastModified: result.data.lastModified || new Date().toISOString()
@@ -93,7 +78,6 @@ const SingleImagePanel: FC<SingleImagePanelProps> = ({
 
                 setCurrentImageUrl(result.data.imageUrl);
                 setIsLoading(false);
-                setRetryCount(0); // 成功后重置重试计数
             } else {
                 throw new Error(result.error || 'API Failed');
             }
@@ -105,65 +89,40 @@ const SingleImagePanel: FC<SingleImagePanelProps> = ({
                 const isVersionError = error.message.includes('Version not found');
                 setErrorMessage(isVersionError ? '版本不存在' : '加载失败');
                 setIsLoading(false);
-
-                // 如果不是版本错误，且重试次数少于3次，自动重试
-                if (!isVersionError && retryCount < 3) {
-                    retryTimerRef.current = setTimeout(() => {
-                        setRetryCount(prev => prev + 1);
-                        loadImage(verId);
-                    }, 2000);
-                }
             }
         }
-    }, [imageKey, refreshKey, onVersionsLoaded, retryCount, clearAllTimers]);
+    }, [imageKey, onVersionsLoaded]);
 
-    // 处理图片加载错误（流中断）
+    // 处理图片加载错误
     const handleImageError = useCallback(() => {
-        console.warn(`[${imageKey}] 图片流中断`);
-
-        // 先显示流中断错误
-        setErrorMessage('流中断');
+        console.warn(`[${imageKey}] 图片加载失败`);
+        setErrorMessage('图片加载失败');
         setIsLoading(false);
+    }, [imageKey]);
 
-        // 1秒后切换为加载中状态并触发重新加载
-        errorTimerRef.current = setTimeout(() => {
-            setErrorMessage('');
-            setIsLoading(true);
-
-            // 再等待1秒后触发刷新
-            retryTimerRef.current = setTimeout(() => {
-                onRequestRefresh();
-            }, 1000);
-        }, 1000);
-    }, [imageKey, onRequestRefresh]);
+    // 重试加载
+    const handleRetry = useCallback(() => {
+        loadImage(targetVersionId);
+    }, [loadImage, targetVersionId]);
 
     useEffect(() => {
         loadImage(targetVersionId);
         return () => {
-            if (abortControllerRef.current) abortControllerRef.current.abort();
-            clearAllTimers();
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
         };
-    }, [targetVersionId, refreshKey, loadImage, clearAllTimers]);
-
-    // 获取显示的状态文本
-    const getStatusText = () => {
-        if (errorMessage) {
-            return errorMessage;
-        }
-        if (isLoading) {
-            return retryCount > 0 ? `加载中... (${retryCount}/3)` : '加载中...';
-        }
-        return '';
-    };
+    }, [targetVersionId, loadImage]);
 
     return (
         <div className={styles.singlePanelWrapper}>
             <div className={styles.panelLabel}>
                 <span>{imageKey.split('.')[0].toUpperCase()}</span>
-                {getStatusText() && (
-                    <span className={errorMessage ? styles.errorText : styles.statusText}>
-                        {getStatusText()}
-                    </span>
+                {isLoading && (
+                    <span className={styles.statusText}>加载中...</span>
+                )}
+                {errorMessage && (
+                    <span className={styles.errorText}>{errorMessage}</span>
                 )}
             </div>
             <div className={styles.imageContainer}>
@@ -178,14 +137,11 @@ const SingleImagePanel: FC<SingleImagePanelProps> = ({
                     />
                 )}
 
-                {/* 当有错误且不是流中断时，显示重试按钮 */}
-                {errorMessage && errorMessage !== '流中断' && retryCount >= 3 && (
+                {/* 显示错误时的重试按钮 */}
+                {errorMessage && (
                     <button
                         className={styles.retryButton}
-                        onClick={() => {
-                            setRetryCount(0);
-                            loadImage(targetVersionId);
-                        }}
+                        onClick={handleRetry}
                     >
                         点击重试
                     </button>
@@ -209,15 +165,6 @@ const VersionViewer: FC<VersionViewerProps> = () => {
     // 当前选中的版本索引
     const [selectedIndex, setSelectedIndex] = useState<number>(0);
 
-    // 强制刷新计数器
-    const [refreshKey, setRefreshKey] = useState<number>(0);
-
-    // 处理流中断重试
-    const handleRequestRefresh = useCallback(() => {
-        console.log('[VersionViewer] 检测到流中断，正在刷新...');
-        setRefreshKey(prev => prev + 1);
-    }, []);
-
     // 收集子组件传来的版本信息
     const handleVersionsLoaded = useCallback((key: string, versions: VersionData[]) => {
         setVersionRegistry(prev => {
@@ -234,9 +181,14 @@ const VersionViewer: FC<VersionViewerProps> = () => {
         try {
             const d = new Date(dateString);
             return d.toLocaleString('zh-CN', {
-                month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
             });
-        } catch { return dateString; }
+        } catch {
+            return dateString;
+        }
     };
 
     // 获取版本标签
@@ -301,9 +253,7 @@ const VersionViewer: FC<VersionViewerProps> = () => {
                             key={key}
                             imageKey={key}
                             targetVersionId={myTargetId}
-                            refreshKey={refreshKey}
                             onVersionsLoaded={handleVersionsLoaded}
-                            onRequestRefresh={handleRequestRefresh}
                         />
                     );
                 })}
