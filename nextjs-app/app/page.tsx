@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import MainContent from '@/components/MainContent';
-import { sidebarCards } from '@/lib/constants'; // 引入静态配置
 import { getVisibleCards } from '@/lib/data';
 import { getWeatherData } from '@/lib/weather';
 
