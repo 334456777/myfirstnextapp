@@ -197,3 +197,18 @@
   opacity: 1;
   transition: opacity 0.3s ease;
 }
+
+/* === 加载中样式 === */
+.retryButton {
+  padding: 8px 16px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.retryButton:hover {
+  background: #0056b3;
+}
