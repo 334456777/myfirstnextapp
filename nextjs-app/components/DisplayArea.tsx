@@ -5,13 +5,9 @@ import dynamic from 'next/dynamic';
 import styles from './DisplayArea.module.css';
 import { TimeSlot } from '@/lib/weather';
 
-const LogViewer = dynamic(() => import('./LogViewer'), {
-  loading: () => <p>Loading Logs...</p>
-});
+const LogViewer = dynamic(() => import('./LogViewer'));
 const VersionViewer = dynamic(() => import('./VersionViewer'));
-const WeatherViewer = dynamic(() => import('./WeatherViewer'), {
-  loading: () => <p>Loading Weather...</p>
-});
+const WeatherViewer = dynamic(() => import('./WeatherViewer'));
 
 interface DisplayAreaProps {
     title: string;
