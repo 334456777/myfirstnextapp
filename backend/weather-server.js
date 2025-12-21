@@ -151,8 +151,8 @@ function cleanExpiredCache() {
   }
 }
 
-// 每天清理一次过期缓存
-setInterval(cleanExpiredCache, 24 * 60 * 60 * 1000);
+// 每周清理一次过期缓存
+setInterval(cleanExpiredCache, 7 * 24 * 60 * 60 * 1000);
 
 /**
  * 格式化日期为 ISO 8601 格式
