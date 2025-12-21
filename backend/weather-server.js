@@ -151,7 +151,7 @@ function cleanExpiredCache() {
   }
 }
 
-// 每周清理一次过期缓存
+// 每周清理一次过期缓存           天数 小时 分钟  秒    毫秒
 setInterval(cleanExpiredCache, 7 * 24 * 60 * 60 * 1000);
 
 /**
