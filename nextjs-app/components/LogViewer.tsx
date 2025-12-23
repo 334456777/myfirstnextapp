@@ -150,7 +150,7 @@ const LogViewer: FC<LogViewerProps> = ({ url }) => {
                     >
                         <span className={styles.toggleIcon}>{showHistory ? '▲' : '▼'}</span>
                         <span className={styles.toggleText}>
-                            {showHistory ? 'Hide History' : `View History (${parsedData.historyDates.length} dates)`}
+                            {showHistory ? 'Hide History' : `View History`}
                         </span>
                     </button>
                 )}
