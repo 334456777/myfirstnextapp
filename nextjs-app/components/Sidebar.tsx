@@ -24,11 +24,6 @@ const Sidebar: FC<SidebarProps> = ({
     const [visibleCards, setVisibleCards] = useState<string[]>(initialVisibleCards);
 
     useEffect(() => {
-        if (initialVisibleCards.length > 0) {
-            setVisibleCards(initialVisibleCards);
-            return;
-        }
-
         const checkLogFiles = async () => {
             const visible: string[] = [];
 
@@ -36,15 +31,19 @@ const Sidebar: FC<SidebarProps> = ({
                 if (card.type === 'log' && card.data) {
                     try {
                         const response = await fetch(card.data, {
-                            headers: { 'Range': 'bytes=0-1023' }
+                            headers: { 'Range': 'bytes=0-1023' },
+                            cache: 'no-cache' // 强制每次都检查最新文件状态
                         });
 
                         if (response.ok || response.status === 206) { // 206 Partial Content
                             const text = await response.text();
                             const lines = text.split('\n').filter(line => line.trim());
 
-                            const hasOnlyTitle = lines.length <= 1 &&
-                                (lines[0]?.trim() === '#' || lines[0]?.trim() === '# 记录严重错误');
+                            // 检查是否只有标题行（无实际日志内容）
+                            const hasOnlyTitle = lines.length <= 2 && (
+                                (lines[0]?.trim() === '#' || lines[0]?.trim() === '# 记录严重错误') &&
+                                (!lines[1] || lines[1]?.trim() === 'YYYY-MM-DD HH:MM:SS - LEVEL - MESSAGE')
+                            );
 
                             const contentRange = response.headers.get('Content-Range');
                             const totalSize = contentRange ? parseInt(contentRange.split('/')[1]) : 0;
@@ -63,8 +62,14 @@ const Sidebar: FC<SidebarProps> = ({
             setVisibleCards(visible);
         };
 
+        // 首次立即检查
         checkLogFiles();
-    }, [initialVisibleCards]);
+
+        // 每30秒自动检查一次日志文件状态
+        const intervalId = setInterval(checkLogFiles, 30000);
+
+        return () => clearInterval(intervalId);
+    }, []);
 
     const getIcon = useCallback((card: typeof sidebarCards[0], isActive: boolean) => {
         if (card.type === 'weather') return <WeatherIcon isActive={isActive} />;

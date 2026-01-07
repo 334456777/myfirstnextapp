@@ -37,8 +37,12 @@ export async function getVisibleCards(): Promise<string[]> {
                 const text = buffer.toString('utf-8');
 
                 const lines = text.split('\n').filter(line => line.trim());
-                const hasOnlyTitle = lines.length <= 1 &&
-                    (lines[0]?.trim() === '#' || lines[0]?.trim() === '# 记录严重错误');
+                
+                // 检查是否只有标题行（无实际日志内容）
+                const hasOnlyTitle = lines.length <= 2 && (
+                    (lines[0]?.trim() === '#' || lines[0]?.trim() === '# 记录严重错误') &&
+                    (!lines[1] || lines[1]?.trim() === 'YYYY-MM-DD HH:MM:SS - LEVEL - MESSAGE')
+                );
 
                 if (!hasOnlyTitle) {
                     visible.push(card.id);
