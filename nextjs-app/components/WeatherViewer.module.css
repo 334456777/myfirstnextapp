@@ -127,3 +127,28 @@
     min-width: 320px;
   }
 }
+
+/* === 页脚 === */
+.weatherFooter {
+  text-align: center;
+  padding: 20px;
+  margin-top: 30px;
+  color: #64748b;
+  font-size: 13px;
+  border-top: 1px solid #e2e8f0;
+  background-color: transparent;
+}
+
+.weatherFooter a {
+  color: #475569;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid #cbd5e1;
+  padding-bottom: 1px;
+}
+
+.weatherFooter a:hover {
+  color: #1e293b;
+  border-bottom-color: #64748b;
+}

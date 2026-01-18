@@ -1,8 +1,8 @@
 'use client';
 
 import { FC, useState, useEffect, useRef, useCallback } from 'react';
-import styles from './VersionViewer.module.css';
 import { ArrowUpIcon, ArrowDownIcon } from './icons';
+import styles from './VersionViewer.module.css';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://www.yusteven.com';
 
@@ -257,6 +257,11 @@ const VersionViewer: FC<VersionViewerProps> = () => {
                         />
                     );
                 })}
+            </div>
+
+            {/* 页脚 - 来源标注 */}
+            <div className={styles.footer}>
+                数据来源：<a href="https://sos70.ru" target="_blank" rel="noopener noreferrer">sos70.ru</a>
             </div>
         </div>
     );
