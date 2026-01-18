@@ -4,6 +4,7 @@ import { FC, useMemo } from 'react';
 import useSWR from 'swr';
 import ImageGallery, { ImageItem } from './ImageGallery';
 import { TimeSlot, parseWeatherData } from '@/lib/weather';
+import styles from './WeatherViewer.module.css';
 
 interface WeatherViewerProps {
     initialData?: TimeSlot[];
@@ -44,15 +45,20 @@ const WeatherViewer: FC<WeatherViewerProps> = ({ initialData }) => {
     }, [timeSlots]);
 
     return (
-        <ImageGallery
-            images={images}
-            loading={isLoading && !initialData}
-            error={error?.message || null}
-            loadingMessage="Fetching weather images..."
-            emptyMessage="No weather data available"
-            minScreenSizeForZoom={1024}
-            columns={{ mobile: 1, tablet: 1, desktop: 2, wide: 3 }}
-        />
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <ImageGallery
+                images={images}
+                loading={isLoading && !initialData}
+                error={error?.message || null}
+                loadingMessage="Fetching weather images..."
+                emptyMessage="No weather data available"
+                minScreenSizeForZoom={1024}
+                columns={{ mobile: 1, tablet: 1, desktop: 2, wide: 3 }}
+            />
+            <div className={styles.weatherFooter}>
+                数据来源：<a href="https://charts.ecmwf.int/products/medium-mslp-rain" target="_blank" rel="noopener noreferrer">ECMWF</a>
+            </div>
+        </div>
     );
 };
 
