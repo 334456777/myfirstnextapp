@@ -1,11 +1,28 @@
 // lib/data.ts
 import 'server-only'; // 🛡️ 保护机制：确保这个文件绝不会泄露到客户端
 import fs from 'fs/promises';
+import path from 'path';
 import { sidebarCards } from './constants';
 
+/**
+ * 获取可见的卡片列表
+ * - 生产环境：检查日志文件是否有内容
+ * - 开发环境：显示所有卡片（使用 mock 数据）
+ */
 export async function getVisibleCards(): Promise<string[]> {
     const visible: string[] = [];
 
+    // 检测是否为开发环境
+    const isDev = process.env.NODE_ENV === 'development';
+    const hasDevMode = process.env.NEXT_PUBLIC_DEV_MODE === 'true';
+
+    // 开发环境：显示所有卡片
+    if (isDev || hasDevMode) {
+        console.log('🔧 开发环境模式：显示所有卡片');
+        return sidebarCards.map(card => card.id);
+    }
+
+    // 生产环境：检查日志文件是否有内容
     for (const card of sidebarCards) {
         // 非日志卡片直接显示
         if (card.type !== 'log' || !card.data) {
@@ -37,7 +54,7 @@ export async function getVisibleCards(): Promise<string[]> {
                 const text = buffer.toString('utf-8');
 
                 const lines = text.split('\n').filter(line => line.trim());
-                
+
                 // 检查是否只有标题行（无实际日志内容）
                 const hasOnlyTitle = lines.length <= 2 && (
                     (lines[0]?.trim() === '#' || lines[0]?.trim() === '# 记录严重错误') &&

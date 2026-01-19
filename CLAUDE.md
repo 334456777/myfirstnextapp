@@ -44,6 +44,41 @@ npm start
 npm run lint
 ```
 
+### 本地开发环境配置
+
+首次开发前需要配置环境变量：
+
+```bash
+# 1. 创建环境变量文件（已包含在项目中）
+cp .env.example .env.local
+
+# 2. .env.local 内容：
+# NEXT_PUBLIC_BACKEND_URL=https://www.yusteven.com
+# NEXT_PUBLIC_DEV_MODE=true
+```
+
+**本地开发特性**：
+- ✅ 自动显示所有侧边栏卡片（无需日志文件）
+- ✅ 使用线上 API 获取真实天气和图片数据
+- ✅ 使用本地 mock 日志文件展示日志查看器
+- ✅ 支持热更新和快速开发迭代
+
+**可选：启动本地后端服务**
+
+如果需要使用本地后端（不依赖线上 API）：
+
+```bash
+# 终端 1：启动天气服务
+cd backend
+node weather-server.js  # 端口 3001
+
+# 终端 2：启动 S3 服务（需要配置 .env）
+node s3-server.js  # 端口 3002
+
+# 然后修改 .env.local：
+# NEXT_PUBLIC_BACKEND_URL=http://localhost:3001
+```
+
 ### 后端 (backend/)
 
 ```bash
@@ -94,7 +129,14 @@ sudo systemctl status s3-service
 4. **侧边栏卡片配置**
    - `lib/constants.ts` 定义了 4 个卡片配置
    - `lib/data.ts` 的 `getVisibleCards()` 函数动态检查日志文件是否有内容，只显示有数据的卡片
-   - 日志文件路径映射：`/logs/*.log` → `/home/yusteven/boluo/pyt/*.log`
+   - 日志文件路径映射：
+     - **开发环境**：`/api/logs?file=urls.log` → `public/logs/urls.log`（本地 mock 数据）
+     - **生产环境**：`/logs/*.log` → `/home/yusteven/boluo/pyt/*.log`（服务器真实日志）
+
+5. **开发环境适配**
+   - `lib/data.ts` 检测 `NODE_ENV=development` 或 `NEXT_PUBLIC_DEV_MODE=true` 时跳过文件检查
+   - `lib/constants.ts` 根据环境自动切换日志 API 路径
+   - `app/api/logs/route.ts` 提供本地开发环境的日志读取接口
 
 ### 后端架构
 
@@ -150,6 +192,30 @@ WEATHER_PORT=3001
 - PM2 配置：`nextjs-app/ecosystem.config.js`（注意 `cwd` 指向生产路径）
 
 ## 常见问题
+
+### 本地开发无法启动
+
+确保已配置环境变量：
+```bash
+cd nextjs-app
+# 检查 .env.local 是否存在
+cat .env.local
+# 如果不存在，从 .env.example 复制
+cp .env.example .env.local
+```
+
+### 本地开发时卡片不显示
+
+开发环境应自动显示所有卡片，如果没有显示：
+1. 检查 `.env.local` 中是否设置了 `NEXT_PUBLIC_DEV_MODE=true`
+2. 查看终端日志，确认看到 "🔧 开发环境模式：显示所有卡片"
+3. 重启开发服务器：`npm run dev`
+
+### 本地开发时 API 调用失败
+
+默认配置使用线上 API，需要网络连接。如果要离线开发：
+1. 启动本地后端服务（参考上文"本地开发环境配置"）
+2. 修改 `.env.local` 中的 `NEXT_PUBLIC_BACKEND_URL=http://localhost:3001`
 
 ### 修改代码后不生效
 
