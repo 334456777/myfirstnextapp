@@ -56,8 +56,9 @@ export async function getVisibleCards(): Promise<string[]> {
                 const lines = text.split('\n').filter(line => line.trim());
 
                 // 检查是否只有标题行（无实际日志内容）
-                const hasOnlyTitle = lines.length <= 2 && (
-                    (lines[0]?.trim() === '#' || lines[0]?.trim() === '# 记录严重错误') &&
+                const hasOnlyTitle = lines.length === 0 || (
+                    lines.length <= 2 &&
+                    lines[0]?.trim().startsWith('#') &&
                     (!lines[1] || lines[1]?.trim() === 'YYYY-MM-DD HH:MM:SS - LEVEL - MESSAGE')
                 );
 
