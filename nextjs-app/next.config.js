@@ -25,13 +25,27 @@ const nextConfig = {
       },
     ],
   },
+
+  // 3. 响应头配置：限制首页缓存时间，防止 Cloudflare 长期缓存错误内容
+  async headers() {
+    return [
+      {
+        source: '/',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 's-maxage=60, stale-while-revalidate=300',
+          },
+        ],
+      },
+    ];
+  },
+
   async rewrites() {
-    // 开发环境：使用本地后端服务
-    // 生产环境：使用 Nginx 代理到后端服务
     const backendHost =
       process.env.NODE_ENV === 'development'
-        ? 'localhost:3001' // 开发环境：直接转发到本地后端
-        : 'localhost:3001'; // 生产环境：Nginx 会处理代理
+        ? 'localhost:3001'
+        : 'localhost:3001';
 
     return [
       // 天气 API 代理
