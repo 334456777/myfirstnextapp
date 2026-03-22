@@ -11,7 +11,7 @@ const WeatherViewer = dynamic(() => import('./WeatherViewer'));
 
 interface DisplayAreaProps {
     title: string;
-    content: any;
+    content: string | null;
     contentType: string;
     initialWeatherData?: TimeSlot[];
 }
@@ -23,7 +23,7 @@ const DisplayArea: FC<DisplayAreaProps> = ({ title, content, contentType, initia
             <div className={styles.displayContent}>
                 {!content && contentType !== 'weather' && <div className={styles.empty}></div>}
                 {contentType === 'log' && content && <LogViewer url={content} />}
-                {contentType === 'version' && content && <VersionViewer imageKey={content} />}
+                {contentType === 'version' && content && <VersionViewer />}
                 {contentType === 'weather' && <WeatherViewer initialData={initialWeatherData} />}
             </div>
         </div>

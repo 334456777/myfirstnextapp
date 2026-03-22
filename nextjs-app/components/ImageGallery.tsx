@@ -1,6 +1,6 @@
 'use client';
 
-import { FC, ReactNode, useState } from 'react';
+import { FC, ReactNode, useRef } from 'react';
 import { Gallery, Item } from 'react-photoswipe-gallery';
 import 'photoswipe/dist/photoswipe.css';
 import styles from './ImageGallery.module.css';
@@ -62,8 +62,8 @@ const ImageGallery: FC<ImageGalleryProps> = ({
     bgOpacity = 0.9,
     animationConfig = {},
 }) => {
-    const [savedZoom, setSavedZoom] = useState<number>(1);
-    const [savedPosition, setSavedPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+    const savedZoomRef = useRef<number>(1);
+    const savedPositionRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
     const {
         maxZoom = 10,
@@ -107,28 +107,28 @@ const ImageGallery: FC<ImageGalleryProps> = ({
     };
 
     const handleGalleryInit = (pswp: any) => {
-        pswp.on('zoomPanUpdate', (e: any) => {
+        pswp.on('zoomPanUpdate', () => {
             if (pswp.currSlide) {
-                setSavedZoom(pswp.currSlide.currZoomLevel || 1);
-                setSavedPosition({
+                savedZoomRef.current = pswp.currSlide.currZoomLevel || 1;
+                savedPositionRef.current = {
                     x: pswp.currSlide.pan?.x || 0,
                     y: pswp.currSlide.pan?.y || 0,
-                });
+                };
             }
         });
 
         pswp.on('change', () => {
             setTimeout(() => {
-                if (pswp.currSlide && savedZoom > 1) {
+                if (pswp.currSlide && savedZoomRef.current > 1) {
                     const centerPoint = {
                         x: pswp.currSlide.width / 2,
                         y: pswp.currSlide.height / 2,
                     };
-                    pswp.currSlide.zoomTo(savedZoom, centerPoint, 0);
+                    pswp.currSlide.zoomTo(savedZoomRef.current, centerPoint, 0);
 
-                    if (savedPosition.x !== 0 || savedPosition.y !== 0) {
-                        pswp.currSlide.pan.x = savedPosition.x;
-                        pswp.currSlide.pan.y = savedPosition.y;
+                    if (savedPositionRef.current.x !== 0 || savedPositionRef.current.y !== 0) {
+                        pswp.currSlide.pan.x = savedPositionRef.current.x;
+                        pswp.currSlide.pan.y = savedPositionRef.current.y;
                         pswp.currSlide.applyCurrentZoomPan();
                     }
                 }
@@ -212,12 +212,9 @@ const ImageGallery: FC<ImageGalleryProps> = ({
                                         ref={ref}
                                         src={item.url}
                                         alt={item.alt || item.label || `Image ${index + 1}`}
-                                        className={styles.image}
-                                        style={{
-                                            cursor: (enableZoomOnMobile || (typeof window !== 'undefined' && window.innerWidth >= minScreenSizeForZoom)) ? 'pointer' : 'default'
-                                        }}
+                                        className={`${styles.image} ${enableZoomOnMobile ? styles.zoomable : styles.zoomableDesktop}`}
                                         onClick={(e) => {
-                                            if (enableZoomOnMobile || (typeof window !== 'undefined' && window.innerWidth >= minScreenSizeForZoom)) {
+                                            if (enableZoomOnMobile || window.innerWidth >= minScreenSizeForZoom) {
                                                 open(e);
                                             }
                                         }}

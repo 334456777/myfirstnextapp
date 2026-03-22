@@ -16,10 +16,10 @@ export default function MainContent({ initialWeatherData, initialVisibleCards }:
     const [isLocked, setIsLocked] = useState(false);
     const [activeCardId, setActiveCardId] = useState<string | null>(null);
     const [displayTitle, setDisplayTitle] = useState('');
-    const [displayContent, setDisplayContent] = useState<any>(null);
+    const [displayContent, setDisplayContent] = useState<string | null>(null);
     const [contentType, setContentType] = useState<string>('');
 
-    const handleCardEnter = (type: string, data: any, title: string, cardId: string) => {
+    const handleCardEnter = (type: string, data: string | null, title: string, cardId: string) => {
         if (!isLocked) {
             setDisplayTitle(title);
             setContentType(type);
@@ -35,7 +35,7 @@ export default function MainContent({ initialWeatherData, initialVisibleCards }:
         }
     };
 
-    const handleCardClick = (type: string, data: any, title: string, cardId: string) => {
+    const handleCardClick = (type: string, data: string | null, title: string, cardId: string) => {
         if (isLocked && activeCardId === cardId) {
             setIsLocked(false);
             setActiveCardId(null);

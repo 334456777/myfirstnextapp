@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   keywords: '舒曼共振, SHM, SRF, SRA, sosrff, 天气预报, ECMWF',
   authors: [{ name: 'yusteven' }],
   other: {
-    copyright: '© 2025 All rights reserved by yusteven',
+    copyright: '© 2026 All rights reserved by yusteven',
   }
 };
 

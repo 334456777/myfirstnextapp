@@ -75,6 +75,20 @@
   transition: opacity 0.5s;
 }
 
+.zoomable {
+  cursor: pointer;
+}
+
+.zoomableDesktop {
+  cursor: default;
+}
+
+@media (min-width: 1024px) {
+  .zoomableDesktop {
+    cursor: pointer;
+  }
+}
+
 .loading {
   text-align: center;
   padding: 40px;

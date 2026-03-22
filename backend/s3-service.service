@@ -11,8 +11,10 @@ Restart=always
 RestartSec=10
 
 # 环境变量
+EnvironmentFile=/home/yusteven/html/backend/.env
 Environment=NODE_ENV=production
 Environment=S3_PORT=3002
+Environment=HOST_URL=https://www.yusteven.com
 
 # 日志输出重定向
 StandardOutput=append:/home/yusteven/html/backend/s3-service.log

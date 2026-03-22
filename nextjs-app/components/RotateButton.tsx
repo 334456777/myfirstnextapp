@@ -1,14 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import styles from './RotateButton.module.css';
 import { RotateIcon, BackIcon } from './icons';
 
 export default function RotateButton() {
     const [isRotated, setIsRotated] = useState(false);
+    const mainRef = useRef<HTMLElement | null>(null);
+
+    useEffect(() => {
+        mainRef.current = document.querySelector('main');
+    }, []);
 
     const handleRotate = () => {
-        const mainContent = document.querySelector('main');
+        const mainContent = mainRef.current;
         if (!mainContent) return;
 
         if (!isRotated) {
