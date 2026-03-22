@@ -79,9 +79,8 @@ app.get('/api/image', async (req, res) => {
     if (!key) return res.status(400).json({ success: false, error: 'Missing key' });
 
     const versions = await getImageVersionIds(key);
-    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
-    const host = process.env.HOST_URL || req.get('host');
-    const baseUrl = `${protocol}://${host}`;
+    const hostUrl = process.env.HOST_URL;
+    const baseUrl = hostUrl || `${req.headers['x-forwarded-proto'] || req.protocol}://${req.get('host')}`;
 
     let streamUrl;
     let currentVersionInfo = {};
