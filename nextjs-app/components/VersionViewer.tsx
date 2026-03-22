@@ -177,15 +177,21 @@ const VersionViewer: FC<VersionViewerProps> = () => {
     const referenceVersions = versionRegistry[IMAGE_KEYS[0]] || [];
 
     // 日期格式化
-    const formatDate = (dateString: string) => {
+    const formatDate = (dateString: string, isLatest: boolean) => {
         try {
             const d = new Date(dateString);
-            return d.toLocaleString('zh-CN', {
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
+            if (isLatest) {
+                return d.toLocaleString('zh-CN', {
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}/${month}/${day}`;
         } catch {
             return dateString;
         }
@@ -224,7 +230,7 @@ const VersionViewer: FC<VersionViewerProps> = () => {
                         {!referenceVersions.length && <option>加载版本列表中...</option>}
                         {referenceVersions.map((v, idx) => (
                             <option key={`${v.versionId}-${idx}`} value={idx}>
-                                {getVersionLabel(idx)} ({formatDate(v.lastModified)})
+                                {getVersionLabel(idx)} ({formatDate(v.lastModified, idx === 0)})
                             </option>
                         ))}
                     </select>
