@@ -4,10 +4,15 @@ const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
 const fs = require('fs');
+const fsPromises = require('fs').promises;
 const path = require('path');
 
 const app = express();
 const port = process.env.WEATHER_PORT || 3001;
+
+app.use(cors({
+  origin: ['https://www.yusteven.com', 'https://yusteven.com'],
+}));
 
 // ECMWF API 基础地址
 const ECMWF_BASE_URL = 'https://charts.ecmwf.int/opencharts-api/v1/products/medium-mslp-rain/';
@@ -42,6 +47,12 @@ function getCacheFileName(baseTime, validTime) {
 function getNextValidTime(currentValidTime) {
   const validHours = [0, 3, 6, 9, 12, 15, 18, 21];
   const current = new Date(currentValidTime);
+
+  if (isNaN(current.getTime())) {
+    // 无效日期，返回 1 小时后作为降级
+    return new Date(Date.now() + 60 * 60 * 1000);
+  }
+
   const currentHour = current.getUTCHours();
   const currentIndex = validHours.indexOf(currentHour);
 
@@ -53,7 +64,8 @@ function getNextValidTime(currentValidTime) {
   }
 
   const now = Date.now();
-  while (current.getTime() <= now) {
+  let iterations = 0;
+  while (current.getTime() <= now && iterations < 100) {
     const hour = current.getUTCHours();
     const idx = validHours.indexOf(hour);
     if (idx !== -1 && idx < validHours.length - 1) {
@@ -62,22 +74,19 @@ function getNextValidTime(currentValidTime) {
       current.setUTCDate(current.getUTCDate() + 1);
       current.setUTCHours(validHours[0], 0, 0, 0);
     }
+    iterations++;
   }
 
   return current;
 }
 
 /**
- * 从文件缓存中读取数据
+ * 从文件缓存中读取数据（异步）
  */
-function getCacheFromFile(baseTime, validTime) {
+async function getCacheFromFile(baseTime, validTime) {
   try {
     const cacheFile = getCacheFileName(baseTime, validTime);
-    if (!fs.existsSync(cacheFile)) {
-      return null;
-    }
-
-    const fileContent = fs.readFileSync(cacheFile, 'utf8');
+    const fileContent = await fsPromises.readFile(cacheFile, 'utf8');
     const cached = JSON.parse(fileContent);
 
     const now = Date.now();
@@ -85,7 +94,7 @@ function getCacheFromFile(baseTime, validTime) {
       return cached.data;
     }
 
-    fs.unlinkSync(cacheFile);
+    await fsPromises.unlink(cacheFile).catch(() => {});
     return null;
   } catch (error) {
     return null;
@@ -93,9 +102,9 @@ function getCacheFromFile(baseTime, validTime) {
 }
 
 /**
- * 将数据保存到文件缓存
+ * 将数据保存到文件缓存（异步）
  */
-function saveCacheToFile(baseTime, validTime, data) {
+async function saveCacheToFile(baseTime, validTime, data) {
   try {
     const cacheFile = getCacheFileName(baseTime, validTime);
     const validTimeDate = new Date(validTime);
@@ -110,7 +119,7 @@ function saveCacheToFile(baseTime, validTime, data) {
       expiresAt: expiresAt
     };
 
-    fs.writeFileSync(cacheFile, JSON.stringify(cacheData, null, 2), 'utf8');
+    await fsPromises.writeFile(cacheFile, JSON.stringify(cacheData, null, 2), 'utf8');
     return true;
   } catch (error) {
     console.error('Failed to save cache to file:', error);
@@ -119,29 +128,29 @@ function saveCacheToFile(baseTime, validTime, data) {
 }
 
 /**
- * 清理过期的缓存文件
+ * 清理过期的缓存文件（异步）
  */
-function cleanExpiredCache() {
+async function cleanExpiredCache() {
   try {
-    const files = fs.readdirSync(CACHE_DIR);
+    const files = await fsPromises.readdir(CACHE_DIR);
     const now = Date.now();
     let cleaned = 0;
 
-    files.forEach(file => {
-      if (!file.endsWith('.json')) return;
+    for (const file of files) {
+      if (!file.endsWith('.json')) continue;
       const filePath = path.join(CACHE_DIR, file);
       try {
-        const content = fs.readFileSync(filePath, 'utf8');
+        const content = await fsPromises.readFile(filePath, 'utf8');
         const cached = JSON.parse(content);
         if (now >= cached.expiresAt) {
-          fs.unlinkSync(filePath);
+          await fsPromises.unlink(filePath);
           cleaned++;
         }
       } catch (err) {
-        fs.unlinkSync(filePath);
+        await fsPromises.unlink(filePath).catch(() => {});
         cleaned++;
       }
-    });
+    }
 
     if (cleaned > 0) {
       console.log(`[Cache Cleanup] Removed ${cleaned} expired cache files`);
@@ -151,8 +160,8 @@ function cleanExpiredCache() {
   }
 }
 
-// 每周清理一次过期缓存           天数 小时 分钟  秒    毫秒
-setInterval(cleanExpiredCache, 7 * 24 * 60 * 60 * 1000);
+// 每天清理一次过期缓存
+setInterval(cleanExpiredCache, 24 * 60 * 60 * 1000);
 
 /**
  * 格式化日期为 ISO 8601 格式
@@ -215,7 +224,7 @@ async function fetchWeatherSmart(count = 1) {
     if (response1.data && response1.data.data && response1.data.data.link) {
       console.log('[Success on first try]');
 
-      saveCacheToFile(currentBaseTime, currentValidTime, response1.data);
+      await saveCacheToFile(currentBaseTime, currentValidTime, response1.data);
 
       if (count === 1) {
         return [{
@@ -256,7 +265,7 @@ async function fetchWeatherSmart(count = 1) {
 
           if (response2.data && response2.data.data && response2.data.data.link) {
             console.log('[Success on second try]');
-            saveCacheToFile(currentBaseTime, currentValidTime, response2.data);
+            await saveCacheToFile(currentBaseTime, currentValidTime, response2.data);
 
             if (count === 1) {
               return [{
@@ -317,20 +326,7 @@ async function fetchWeatherSmart(count = 1) {
  * 辅助函数：基于第一个成功的请求，继续请求其他时间段
  */
 async function fetchMultipleValidTimes(baseTime, firstValidTime, count) {
-  const results = [];
   const firstDate = new Date(firstValidTime);
-
-  const cachedFirst = getCacheFromFile(baseTime, firstValidTime);
-  if (cachedFirst) {
-    results.push({
-      success: true,
-      data: cachedFirst,
-      usedBaseTime: baseTime,
-      usedValidTime: firstValidTime,
-      timeOffset: 3,
-      fromCache: true
-    });
-  }
 
   const validTimes = [firstValidTime];
   for (let i = 1; i < count; i++) {
@@ -341,7 +337,7 @@ async function fetchMultipleValidTimes(baseTime, firstValidTime, count) {
   const promises = validTimes.map(async (validTime, index) => {
     const offset = (index + 1) * 3;
 
-    const cached = getCacheFromFile(baseTime, validTime);
+    const cached = await getCacheFromFile(baseTime, validTime);
     if (cached) {
       console.log(`[Cache Hit] ${validTime}`);
       return {
@@ -368,7 +364,7 @@ async function fetchMultipleValidTimes(baseTime, firstValidTime, count) {
       });
 
       if (response.data && response.data.data && response.data.data.link) {
-        saveCacheToFile(baseTime, validTime, response.data);
+        await saveCacheToFile(baseTime, validTime, response.data);
         return {
           success: true,
           data: response.data,
@@ -409,7 +405,7 @@ async function fetchMultipleValidTimesDirectly(baseTime, availableValidTimes, fi
   const promises = selectedValidTimes.map(async (validTime, index) => {
     const offset = (index + 1) * 3;
 
-    const cached = getCacheFromFile(baseTime, validTime);
+    const cached = await getCacheFromFile(baseTime, validTime);
     if (cached) {
       console.log(`[Cache Hit] ${validTime}`);
       return {
@@ -436,7 +432,7 @@ async function fetchMultipleValidTimesDirectly(baseTime, availableValidTimes, fi
       });
 
       if (response.data && response.data.data && response.data.data.link) {
-        saveCacheToFile(baseTime, validTime, response.data);
+        await saveCacheToFile(baseTime, validTime, response.data);
         console.log(`[Success] ${validTime}`);
         return {
           success: true,
@@ -481,7 +477,7 @@ app.get('/api/weather', async (req, res) => {
     const now = new Date();
     const nowStr = formatDateToISO(now);
 
-    const count = parseInt(req.query.t) || 1;
+    const count = Math.min(parseInt(req.query.t) || 1, 20);
 
     if (count < 1 || isNaN(count)) {
       return res.status(400).json({
@@ -496,13 +492,10 @@ app.get('/api/weather', async (req, res) => {
 
     const results = await fetchWeatherSmart(count);
 
-    const cacheFiles = fs.readdirSync(CACHE_DIR).filter(f => f.endsWith('.json'));
-
     const responseData = {};
     const responseMeta = {
       requestedAt: nowStr,
       count: count,
-      cacheSize: cacheFiles.length,
       timestamp: new Date().toISOString(),
       details: []
     };
@@ -529,18 +522,11 @@ app.get('/api/weather', async (req, res) => {
   } catch (error) {
     console.error('[Weather API Error]:', error.message);
 
-    const errorResponse = {
+    res.status(500).json({
       success: false,
       error: 'Failed to fetch weather data',
-      message: error.message,
       timestamp: new Date().toISOString()
-    };
-
-    if (error.response && error.response.data) {
-      errorResponse.apiError = error.response.data;
-    }
-
-    res.status(500).json(errorResponse);
+    });
   }
 });
 
@@ -556,12 +542,9 @@ app.get('/api/weather/all', async (req, res) => {
 
     const results = await fetchWeatherSmart(10);
 
-    const cacheFiles = fs.readdirSync(CACHE_DIR).filter(f => f.endsWith('.json'));
-
     const responseData = {};
     const responseMeta = {
       requestedAt: nowStr,
-      cacheSize: cacheFiles.length,
       timestamp: new Date().toISOString()
     };
 
@@ -586,41 +569,9 @@ app.get('/api/weather/all', async (req, res) => {
   } catch (error) {
     console.error('[Weather All API Error]:', error.message);
 
-    const errorResponse = {
-      success: false,
-      error: 'Failed to fetch weather data for all time periods',
-      message: error.message,
-      timestamp: new Date().toISOString()
-    };
-
-    if (error.response && error.response.data) {
-      errorResponse.apiError = error.response.data;
-    }
-
-    res.status(500).json(errorResponse);
-  }
-});
-
-// 代理特定路径的请求
-app.get('/api/weather/*', async (req, res) => {
-  try {
-    const path = req.params[0];
-    const url = `${ECMWF_BASE_URL}${path}`;
-    const response = await axios.get(url, {
-      timeout: 10000,
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
-    });
-
-    res.json({
-      success: true,
-      data: response.data,
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
     res.status(500).json({
       success: false,
-      error: 'Failed to proxy request',
-      message: error.message,
+      error: 'Failed to fetch weather data for all time periods',
       timestamp: new Date().toISOString()
     });
   }
@@ -635,10 +586,16 @@ app.use((req, res) => {
     availableRoutes: [
       'GET /health',
       'GET /api/weather?t=N',
-      'GET /api/weather/all',
-      'GET /api/weather/*'
+      'GET /api/weather/all'
     ]
   });
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+});
+process.on('unhandledRejection', (err) => {
+  console.error('Unhandled Rejection:', err);
 });
 
 // 启动服务器
@@ -648,7 +605,6 @@ app.listen(port, '0.0.0.0', () => {
   console.log('  - GET /health');
   console.log('  - GET /api/weather?t=N');
   console.log('  - GET /api/weather/all');
-  console.log('  - GET /api/weather/*');
 });
 
 module.exports = { app };

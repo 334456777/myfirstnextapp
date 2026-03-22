@@ -1,8 +1,16 @@
+export interface WeatherInfo {
+    name?: string;
+    title?: string;
+    description?: string;
+    forecastTime?: string;
+    [key: string]: string | undefined;
+}
+
 export interface TimeSlot {
     key: string;
     hours: number;
     url: string;
-    info: any;
+    info: WeatherInfo | null;
 }
 
 // 统一的环境变量处理
@@ -10,19 +18,22 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://www.yusteven
 const API_ENDPOINT = `${BACKEND_URL}/api/weather/all`;
 
 // ✅ 1. 抽离纯解析逻辑
-export function parseWeatherData(rawData: any): TimeSlot[] {
+interface RawWeatherResponse {
+    data?: Record<string, { data?: { link?: { href?: string }; attributes?: WeatherInfo } }>;
+}
+
+export function parseWeatherData(rawData: RawWeatherResponse): TimeSlot[] {
     if (!rawData || !rawData.data) return [];
 
     const slots: TimeSlot[] = [];
     for (const [key, value] of Object.entries(rawData.data)) {
-        const v = value as any;
-        if (v?.data?.link?.href) {
+        if (value?.data?.link?.href) {
             const hours = parseInt(key.substring(1));
             slots.push({
                 key: key,
                 hours: hours,
-                url: v.data.link.href,
-                info: v.data.attributes
+                url: value.data.link.href,
+                info: value.data.attributes || null
             });
         }
     }

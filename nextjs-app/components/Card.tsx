@@ -8,7 +8,7 @@ interface CardProps {
     icon: string | ReactNode;
     title: string;
     type: string;
-    data: any;
+    data: string | null;
     displayTitle: string;
     isActive: boolean;
     onMouseEnter: () => void;
@@ -20,9 +20,18 @@ const Card: FC<CardProps> = ({ icon, title, isActive, onMouseEnter, onMouseLeave
     return (
         <div
             className={`${styles.card} ${isActive ? styles.active : ''}`}
+            role="button"
+            tabIndex={0}
+            aria-pressed={isActive}
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
             onClick={onClick}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onClick();
+                }
+            }}
         >
             <div className={styles.cardIcon}>{icon}</div>
             <div className={styles.cardTitle}>{title}</div>

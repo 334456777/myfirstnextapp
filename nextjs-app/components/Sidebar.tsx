@@ -8,9 +8,9 @@ import { WeatherIcon, LogIcon, ErrorLogIcon, ImageIcon } from './icons';
 
 interface SidebarProps {
     activeCardId: string | null;
-    onCardEnter: (type: string, data: any, title: string, cardId: string) => void;
+    onCardEnter: (type: string, data: string | null, title: string, cardId: string) => void;
     onCardLeave: () => void;
-    onCardClick: (type: string, data: any, title: string, cardId: string) => void;
+    onCardClick: (type: string, data: string | null, title: string, cardId: string) => void;
     initialVisibleCards?: string[];
 }
 
@@ -66,10 +66,37 @@ const Sidebar: FC<SidebarProps> = ({
         // 首次立即检查
         checkLogFiles();
 
-        // 每30秒自动检查一次日志文件状态
-        const intervalId = setInterval(checkLogFiles, 30000);
+        // 每30秒自动检查一次日志文件状态（仅在标签页可见时）
+        let intervalId: ReturnType<typeof setInterval> | null = null;
 
-        return () => clearInterval(intervalId);
+        const startPolling = () => {
+            if (!intervalId) {
+                intervalId = setInterval(checkLogFiles, 30000);
+            }
+        };
+        const stopPolling = () => {
+            if (intervalId) {
+                clearInterval(intervalId);
+                intervalId = null;
+            }
+        };
+
+        const handleVisibility = () => {
+            if (document.hidden) {
+                stopPolling();
+            } else {
+                checkLogFiles();
+                startPolling();
+            }
+        };
+
+        startPolling();
+        document.addEventListener('visibilitychange', handleVisibility);
+
+        return () => {
+            stopPolling();
+            document.removeEventListener('visibilitychange', handleVisibility);
+        };
     }, []);
 
     const getIcon = useCallback((card: typeof sidebarCards[0], isActive: boolean) => {

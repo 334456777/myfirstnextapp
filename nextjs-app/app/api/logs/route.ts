@@ -14,8 +14,11 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Missing filename' }, { status: 400 });
     }
 
-    // 安全检查：防止路径遍历攻击
+    // 安全检查：防止路径遍历攻击，只允许 .log 文件
     const safeFilename = path.basename(filename);
+    if (!safeFilename.endsWith('.log')) {
+        return NextResponse.json({ error: 'Only .log files allowed' }, { status: 400 });
+    }
     const filePath = path.join(process.cwd(), 'public', 'logs', safeFilename);
 
     try {

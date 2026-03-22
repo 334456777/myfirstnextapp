@@ -6,9 +6,7 @@ import styles from './VersionViewer.module.css';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://www.yusteven.com';
 
-interface VersionViewerProps {
-    imageKey?: string;
-}
+interface VersionViewerProps {}
 
 interface VersionData {
     versionId: string;
@@ -81,12 +79,13 @@ const SingleImagePanel: FC<SingleImagePanelProps> = ({
             } else {
                 throw new Error(result.error || 'API Failed');
             }
-        } catch (error: any) {
-            if (error.name === 'AbortError') return;
+        } catch (error) {
+            if (error instanceof DOMException && error.name === 'AbortError') return;
 
             console.error(`Load Error (${imageKey}):`, error);
             if (!controller.signal.aborted) {
-                const isVersionError = error.message.includes('Version not found');
+                const errorMessage = error instanceof Error ? error.message : '';
+                const isVersionError = errorMessage.includes('Version not found');
                 setErrorMessage(isVersionError ? '版本不存在' : '加载失败');
                 setIsLoading(false);
             }
@@ -168,7 +167,11 @@ const VersionViewer: FC<VersionViewerProps> = () => {
     // 收集子组件传来的版本信息
     const handleVersionsLoaded = useCallback((key: string, versions: VersionData[]) => {
         setVersionRegistry(prev => {
-            if (prev[key]?.length === versions.length) return prev;
+            const existing = prev[key];
+            if (existing && existing.length === versions.length &&
+                existing.every((v, i) => v.versionId === versions[i].versionId)) {
+                return prev;
+            }
             return { ...prev, [key]: versions };
         });
     }, []);
@@ -226,6 +229,7 @@ const VersionViewer: FC<VersionViewerProps> = () => {
                         value={selectedIndex}
                         onChange={(e) => setSelectedIndex(Number(e.target.value))}
                         disabled={!referenceVersions.length}
+                        aria-label="选择版本"
                     >
                         {!referenceVersions.length && <option>加载版本列表中...</option>}
                         {referenceVersions.map((v, idx) => (

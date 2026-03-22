@@ -9,11 +9,20 @@ const { S3Client, ListObjectVersionsCommand, GetObjectCommand } = require('@aws-
 const app = express();
 const port = process.env.S3_PORT || 3002;
 
-app.use(cors());
+app.use(cors({
+  origin: ['https://www.yusteven.com', 'https://yusteven.com'],
+}));
 
-// --- 工具函数与验证 (保持不变) ---
+// --- 工具函数与验证 ---
 const API_TOKENS = new Set();
+const MAX_TOKENS = 1000;
+
 function generateToken() {
+  if (API_TOKENS.size >= MAX_TOKENS) {
+    // 清理最早的 token 防止内存泄漏
+    const first = API_TOKENS.values().next().value;
+    API_TOKENS.delete(first);
+  }
   const token = crypto.randomBytes(16).toString('hex');
   API_TOKENS.add(token);
   setTimeout(() => API_TOKENS.delete(token), 10 * 60 * 1000);
@@ -110,6 +119,8 @@ app.get('/api/image/stream', async (req, res) => {
 
   if (!token || !validateToken(token)) return res.status(401).send('Unauthorized Token');
   if (!key) return res.status(400).send('Missing Key');
+  // 验证 key 格式，只允许 S3 图片文件名
+  if (!/^[\w\-]+\.\w+$/.test(key)) return res.status(400).send('Invalid Key');
 
   // 分支 1: S3 (历史版本)
   if (versionId && versionId !== 'latest') {
@@ -120,8 +131,10 @@ app.get('/api/image/stream', async (req, res) => {
         VersionId: versionId
       });
       const s3Response = await s3Client.send(command);
-      
-      // 直接 pipe，不手动设置 Content-Type，交给 Nginx 或由浏览器自动检测
+
+      if (s3Response.ContentType) {
+        res.set('Content-Type', s3Response.ContentType);
+      }
       s3Response.Body.pipe(res);
 
       s3Response.Body.on('error', (err) => {
@@ -177,6 +190,13 @@ app.get('/api/image/versions', async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+});
+process.on('unhandledRejection', (err) => {
+  console.error('Unhandled Rejection:', err);
 });
 
 app.listen(port, '0.0.0.0', () => {

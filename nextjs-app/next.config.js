@@ -42,10 +42,7 @@ const nextConfig = {
   },
 
   async rewrites() {
-    const backendHost =
-      process.env.NODE_ENV === 'development'
-        ? 'localhost:3001'
-        : 'localhost:3001';
+    const backendHost = 'localhost:3001';
 
     return [
       // 天气 API 代理

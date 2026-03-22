@@ -39,8 +39,8 @@ const LogViewer: FC<LogViewerProps> = ({ url }) => {
 
                 const text = await response.text();
                 setLogContent(text);
-            } catch (err: any) {
-                setError(err.message);
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Unknown error');
             } finally {
                 setLoading(false);
             }
@@ -147,6 +147,7 @@ const LogViewer: FC<LogViewerProps> = ({ url }) => {
                     <button
                         className={styles.historyToggleBtn}
                         onClick={() => setShowHistory(!showHistory)}
+                        aria-expanded={showHistory}
                     >
                         <span className={styles.toggleIcon}>{showHistory ? '▲' : '▼'}</span>
                         <span className={styles.toggleText}>

@@ -3,7 +3,7 @@ export interface CardConfig {
     icon: string;
     title: string;
     type: 'log' | 'version' | 'weather';
-    data: any;
+    data: string | null;
     displayTitle: string;
     variant?: 'default' | 'error';
 }
