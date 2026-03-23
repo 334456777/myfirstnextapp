@@ -178,7 +178,7 @@ const SingleImagePanel: FC<SingleImagePanelProps> = ({
                         key={currentUrl}
                         src={currentUrl}
                         alt={imageKey}
-                        className={`${styles.versionImage} ${previousUrl ? styles.fadeIn : ''}`}
+                        className={`${styles.versionImage} ${styles.fadeIn}`}
                         onAnimationEnd={handleTransitionEnd}
                     />
                 )}
