@@ -27,10 +27,74 @@
   flex-direction: column;
   min-height: 0;
   overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-.empty {
+.displayContent::-webkit-scrollbar {
   display: none;
+}
+
+/* === 空白态：时钟 + 引导 === */
+.idle {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  user-select: none;
+  animation: idleFadeIn 0.8s ease;
+}
+
+@keyframes idleFadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.clock {
+  font-size: 72px;
+  font-weight: 200;
+  letter-spacing: 2px;
+  color: #1d1d1f;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+}
+
+.date {
+  font-size: 17px;
+  font-weight: 400;
+  color: #86868b;
+  letter-spacing: 0.3px;
+  font-family: -apple-system, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+}
+
+.hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 40px;
+  color: #aeaeb2;
+  animation: hintPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes hintPulse {
+  0%, 100% { opacity: 0.5; transform: translateX(0); }
+  50%      { opacity: 1;   transform: translateX(-6px); }
+}
+
+.hintArrow {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.hintText {
+  font-size: 14px;
+  font-weight: 500;
+  font-family: -apple-system, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+  letter-spacing: 0.2px;
 }
 
 @media (max-width: 768px) {
