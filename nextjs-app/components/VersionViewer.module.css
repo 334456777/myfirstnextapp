@@ -178,33 +178,41 @@
 
 /* === 图片容器 === */
 .imageContainer {
-  display: flex;
-  justify-content: center;
-  align-items: center;
   width: 100%;
   position: relative;
-  min-height: 200px;
   background-color: #f8fafc;
   padding: 10px;
+  /* 宽高比由子类指定，防止 crossfade 时容器大小跳变 */
 }
 
 /* === 图片样式 === */
 .versionImage {
-  max-width: 100%;
-  height: auto;
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: calc(100% - 20px);
+  height: calc(100% - 20px);
+  object-fit: contain;
   display: block;
   border-radius: 4px;
   opacity: 1;
   transition: opacity 0.3s ease;
 }
 
+/* === 各图片类型的宽高比 === */
+.ratioShm {
+  /* 1540 x 460 */
+  aspect-ratio: 77 / 23;
+}
+
+.ratioSrf,
+.ratioSra {
+  /* 1006 x 340 */
+  aspect-ratio: 503 / 170;
+}
+
 /* === Crossfade 动画层 === */
 .imageLayerOld {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  right: 10px;
-  max-width: calc(100% - 20px);
   z-index: 1;
 }
 

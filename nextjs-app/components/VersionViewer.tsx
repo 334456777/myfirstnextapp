@@ -163,7 +163,7 @@ const SingleImagePanel: FC<SingleImagePanelProps> = ({
                     <span className={styles.errorText}>{errorMessage}</span>
                 )}
             </div>
-            <div className={styles.imageContainer}>
+            <div className={`${styles.imageContainer} ${styles[`ratio${imageKey.split('.')[0].charAt(0).toUpperCase()}${imageKey.split('.')[0].slice(1)}`]}`}>
                 {/* 旧图层：crossfade 期间保持可见 */}
                 {previousUrl && (
                     <img
