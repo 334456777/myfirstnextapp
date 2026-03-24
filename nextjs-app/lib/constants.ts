@@ -8,7 +8,7 @@ export interface CardConfig {
     variant?: 'default' | 'error';
 }
 
-// 根据环境选择日志路径
+// Select log path based on environment
 const isDev = process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_DEV_MODE === 'true';
 const LOG_BASE_PATH = isDev ? '/api/logs?file=' : '/logs/';
 
@@ -16,19 +16,19 @@ export const sidebarCards: CardConfig[] = [
     {
         id: 'log1',
         icon: '📋',
-        title: '常规日志',
+        title: 'Regular Logs',
         type: 'log',
         data: `${LOG_BASE_PATH}urls.log`,
-        displayTitle: '常规日志 (urls.log)',
+        displayTitle: 'Regular Logs (urls.log)',
         variant: 'default',
     },
     {
         id: 'log2',
         icon: '⚠️',
-        title: '错误日志',
+        title: 'Error Logs',
         type: 'log',
         data: `${LOG_BASE_PATH}critical_errors.log`,
-        displayTitle: '错误日志 (critical_errors.log)',
+        displayTitle: 'Error Logs (critical_errors.log)',
         variant: 'error',
     },
     {
@@ -42,9 +42,9 @@ export const sidebarCards: CardConfig[] = [
     {
         id: 'weather1',
         icon: '🌦️',
-        title: '天气预报',
+        title: 'Weather Forecast',
         type: 'weather',
         data: null,
-        displayTitle: 'ECMWF天气预报',
+        displayTitle: 'ECMWF Weather Forecast',
     },
 ];

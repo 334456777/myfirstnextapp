@@ -56,7 +56,7 @@ const WeatherViewer: FC<WeatherViewerProps> = ({ initialData }) => {
                 columns={{ mobile: 1, tablet: 1, desktop: 2, wide: 3 }}
             />
             <div className={styles.weatherFooter}>
-                数据来源：<a href="https://charts.ecmwf.int/products/medium-mslp-rain" target="_blank" rel="noopener noreferrer">ECMWF</a>
+                Data source: <a href="https://charts.ecmwf.int/products/medium-mslp-rain" target="_blank" rel="noopener noreferrer">ECMWF</a>
             </div>
         </div>
     );
