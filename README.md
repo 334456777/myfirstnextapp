@@ -1,246 +1,245 @@
-# 🌐 yusteven 监控系统
+# 🌐 yusteven Monitoring System
 
-实时监控系统日志和图像查看器 - Next.js 版本
+Real-time system log and image viewer - Next.js version
 
 ---
 
-## 📁 项目结构
+## 📁 Project Structure
 
 ```
 nextjs-app/
-├── app/                        # Next.js 应用目录
-│   ├── layout.tsx              # 页面布局
-│   ├── page.tsx                # 首页
-│   └── globals.css             # 全局样式
+├── app/                        # Next.js app directory
+│   ├── layout.tsx              # Page layout
+│   ├── page.tsx                # Homepage
+│   └── globals.css             # Global styles
 │
-├── components/                 # React 组件
-│   ├── MainContent.tsx         # 主容器
-│   ├── Sidebar.tsx             # 侧边栏（4个卡片）
-│   ├── Card.tsx                # 卡片组件
-│   ├── DisplayArea.tsx         # 内容显示区
-│   ├── LogViewer.tsx           # 日志查看器
-│   ├── VersionViewer.tsx       # 图片版本查看器
-│   ├── WeatherViewer.tsx       # 天气预报
-│   ├── RotateButton.tsx        # 旋转按钮
-│   └── *.module.css            # 组件样式
+├── components/                 # React components
+│   ├── MainContent.tsx         # Main container
+│   ├── Sidebar.tsx             # Sidebar (4 cards)
+│   ├── Card.tsx                # Card component
+│   ├── DisplayArea.tsx         # Content display area
+│   ├── LogViewer.tsx           # Log viewer
+│   ├── VersionViewer.tsx       # Image version viewer
+│   ├── WeatherViewer.tsx       # Weather forecast
+│   ├── RotateButton.tsx        # Rotate button
+│   └── *.module.css            # Component styles
 │
-├── public/                     # 静态文件
-│   ├── logs/                   # 日志文件
-│   └── favicon.ico             # 网站图标
+├── public/                     # Static files
+│   ├── logs/                   # Log files
+│   └── favicon.ico             # Website icon
 │
-├── logs/                       # PM2 日志
+├── logs/                       # PM2 logs
 │
-├── ecosystem.config.js         # PM2 配置
-├── package.json                # 项目依赖
-├── next.config.js              # Next.js 配置
-└── README.md                   # 本文件
+├── ecosystem.config.js         # PM2 configuration
+├── package.json                # Project dependencies
+├── next.config.js              # Next.js configuration
+└── README.md                   # This file
 ```
 
 ---
 
-## 🚀 快速开始
+## 🚀 Quick Start
 
-### 1. 安装依赖（首次使用）
+### 1. Install Dependencies (first time)
 
 ```bash
 npm install
 ```
 
-### 2. 构建项目
+### 2. Build Project
 
 ```bash
 npm run build
 ```
 
-### 3. 启动应用
+### 3. Start Application
 
 ```bash
-# 使用 PM2 启动
+# Start with PM2
 pm2 start ecosystem.config.js
 
-# 查看状态
+# Check status
 pm2 list
 ```
 
-### 4. 访问网站
+### 4. Access Website
 
-- **本地**: http://localhost:3000
-- **线上**: https://www.yusteven.com
+- **Local**: http://localhost:3000
+- **Online**: https://www.yusteven.com
 
 ---
 
-## 🔧 常用命令
+## 🔧 Common Commands
 
-### PM2 进程管理
+### PM2 Process Management
 
 ```bash
-# 启动应用
+# Start application
 pm2 start ecosystem.config.js
 
-# 停止应用
+# Stop application
 pm2 stop nextjs-app
 
-# 重启应用
+# Restart application
 pm2 restart nextjs-app
 
-# 查看状态
+# Check status
 pm2 list
 
-# 查看日志
+# View logs
 pm2 logs nextjs-app
 
-# 实时监控
+# Real-time monitoring
 pm2 monit
 ```
 
-### 开发模式（支持热更新）
+### Development Mode (with hot reload)
 
 ```bash
 npm run dev
-# 访问 http://localhost:3000
+# Access http://localhost:3000
 ```
 
 ---
 
-## 🔄 更新代码
+## 🔄 Update Code
 
-修改代码后，需要重新构建并重启：
+After modifying code, rebuild and restart:
 
 ```bash
-# 1. 重新构建
+# 1. Rebuild
 npm run build
 
-# 2. 重启应用
+# 2. Restart application
 pm2 restart nextjs-app
 ```
 
 ---
 
-## 📋 主要功能
+## 📋 Main Features
 
-| 功能 | 说明 |
-|------|------|
-| 📋 常规日志 | 查看系统运行日志 |
-| ⚠️ 错误日志 | 查看错误信息 |
-| 📜 SOSRFF | SHM/SRF/SRA 图像查看 |
-| 🌦️ 天气预报 | ECMWF 天气预报 |
-
----
-
-## 🌐 部署信息
-
-- **运行环境**: 生产环境
-- **进程管理**: PM2 (开机自启动已配置)
-- **Web 服务器**: Nginx (反向代理)
-- **域名**: https://www.yusteven.com
-- **端口**: 3000 (内部), 443 (HTTPS)
+| Feature | Description |
+|---------|-------------|
+| 📋 Regular Logs | View system operation logs |
+| ⚠️ Error Logs | View error messages |
+| 📜 SOSRFF | SHM/SRF/SRA image viewer |
+| 🌦️ Weather Forecast | ECMWF weather forecast |
 
 ---
 
-## 📝 开发说明
+## 🌐 Deployment Information
 
-### 开发流程
+- **Runtime**: Production environment
+- **Process Manager**: PM2 (auto-start configured)
+- **Web Server**: Nginx (reverse proxy)
+- **Domain**: https://www.yusteven.com
+- **Ports**: 3000 (internal), 443 (HTTPS)
 
-1. **本地开发**
+---
+
+## 📝 Development Notes
+
+### Development Workflow
+
+1. **Local Development**
    ```bash
    npm run dev
    ```
 
-2. **修改代码**
-   - 编辑 `components/` 下的组件
-   - 修改 `app/` 下的页面
+2. **Modify Code**
+   - Edit components in `components/`
+   - Modify pages in `app/`
 
-3. **部署到生产**
+3. **Deploy to Production**
    ```bash
    npm run build
    pm2 restart nextjs-app
    ```
 
-### 开发 vs 生产
+### Development vs Production
 
-| 模式 | 命令 | 热更新 | 性能 | 用途 |
-|------|------|--------|------|------|
-| 开发 | `npm run dev` | ✅ | 慢 | 本地调试 |
-| 生产 | `pm2 start ecosystem.config.js` | ❌ | 快 | 线上运行 |
+| Mode | Command | Hot Reload | Performance | Purpose |
+|------|---------|------------|-------------|---------|
+| Development | `npm run dev` | ✅ | Slow | Local debugging |
+| Production | `pm2 start ecosystem.config.js` | ❌ | Fast | Online runtime |
 
 ---
 
-## 🔍 故障排查
+## 🔍 Troubleshooting
 
-### 应用无法访问
+### Application Not Accessible
 
 ```bash
-# 1. 检查 PM2 状态
+# 1. Check PM2 status
 pm2 list
 
-# 2. 查看日志
+# 2. View logs
 pm2 logs nextjs-app --lines 50
 
-# 3. 重启应用
+# 3. Restart application
 pm2 restart nextjs-app
 ```
 
-### 修改代码不生效
+### Code Changes Not Taking Effect
 
 ```bash
-# 重新构建（必须！）
+# Rebuild (required!)
 npm run build
 
-# 重启应用
+# Restart application
 pm2 restart nextjs-app
 ```
 
-### 端口被占用
+### Port Already in Use
 
 ```bash
-# 查看端口占用
+# Check port usage
 sudo lsof -i :3000
 
-# 停止应用
+# Stop application
 pm2 stop nextjs-app
 ```
 
 ---
 
-## 📞 帮助
+## 📞 Help
 
-### 重要文件
+### Important Files
 
-- **PM2 配置**: `ecosystem.config.js`
-- **Nginx 配置**: `/home/yusteven/html/default`
-- **PM2 进程列表**: `/home/yusteven/.pm2/dump.pm2`
+- **PM2 Configuration**: `ecosystem.config.js`
+- **Nginx Configuration**: `/home/yusteven/html/default`
+- **PM2 Process List**: `/home/yusteven/.pm2/dump.pm2`
 
-### 后端服务
+### Backend Services
 
-- **天气 API**: Port 3001
-- **图片 API**: Port 3002
+- **Weather API**: Port 3001
+- **Image API**: Port 3002
 
-### PM2 开机自启动
+### PM2 Auto-Start
 
-应用已配置为开机自动启动：
+Application is configured for automatic startup on boot:
 
 ```bash
-# 查看自启动配置
+# View auto-start configuration
 pm2 startup
 
-# 保存当前进程列表
+# Save current process list
 pm2 save
 
-# 取消自启动
+# Disable auto-start
 pm2 unstartup systemd
 ```
 
 ---
 
-## 📊 当前状态
+## 📊 Current Status
 
-✅ **生产环境运行中**
+✅ **Production Environment Running**
 
-- **框架**: Next.js 16.0.1
-- **版本**: 0.1.0
-- **最后更新**: 2025-11-12
+- **Framework**: Next.js 16.0.1
+- **Version**: 0.1.0
+- **Last Updated**: 2025-11-12
 
 ---
 
 **© 2025 yusteven**
-

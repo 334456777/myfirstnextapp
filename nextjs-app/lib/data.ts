@@ -1,52 +1,52 @@
 // lib/data.ts
-import 'server-only'; // 🛡️ 保护机制：确保这个文件绝不会泄露到客户端
+import 'server-only'; // 🛡️ Protection mechanism: ensure this file never leaks to client
 import fs from 'fs/promises';
 import path from 'path';
 import { sidebarCards } from './constants';
 
 /**
- * 获取可见的卡片列表
- * - 生产环境：检查日志文件是否有内容
- * - 开发环境：显示所有卡片（使用 mock 数据）
+ * Get visible card list
+ * - Production: Check if log files have content
+ * - Development: Show all cards (using mock data)
  */
 export async function getVisibleCards(): Promise<string[]> {
     const visible: string[] = [];
 
-    // 检测是否为开发环境
+    // Detect if development environment
     const isDev = process.env.NODE_ENV === 'development';
     const hasDevMode = process.env.NEXT_PUBLIC_DEV_MODE === 'true';
 
-    // 开发环境：显示所有卡片
+    // Development: Show all cards
     if (isDev || hasDevMode) {
-        console.log('🔧 开发环境模式：显示所有卡片');
+        console.log('🔧 Development mode: showing all cards');
         return sidebarCards.map(card => card.id);
     }
 
-    // 生产环境：检查日志文件是否有内容
+    // Production: Check if log files have content
     for (const card of sidebarCards) {
-        // 非日志卡片直接显示
+        // Non-log cards show directly
         if (card.type !== 'log' || !card.data) {
             visible.push(card.id);
             continue;
         }
 
         try {
-            // 假设 card.data 存的是文件路径 (例如: /home/yusteven/boluo/pyt/urls.log)
-            // 如果 card.data 是 URL 路径 (/logs/...)，你需要在这里做一个映射转换成绝对路径
+            // Assume card.data stores file path (e.g. /home/yusteven/boluo/pyt/urls.log)
+            // If card.data is URL path (/logs/...), you need to map it to absolute path here
             const filePath = card.data.startsWith('/logs/')
                 ? `/home/yusteven/boluo/pyt/${card.data.replace('/logs/', '')}`
                 : card.data;
 
-            // 1. 获取文件状态 (大小)
+            // 1. Get file status (size)
             const stats = await fs.stat(filePath);
 
-            // 如果文件大于 1KB，直接认为有内容
+            // If file > 1KB, consider has content
             if (stats.size > 1024) {
                 visible.push(card.id);
                 continue;
             }
 
-            // 2. 如果文件很小，读取前 1KB 内容
+            // 2. If file is small, read first 1KB content
             const fileHandle = await fs.open(filePath, 'r');
             try {
                 const buffer = Buffer.alloc(Math.min(stats.size, 1024));
@@ -55,7 +55,7 @@ export async function getVisibleCards(): Promise<string[]> {
 
                 const lines = text.split('\n').filter(line => line.trim());
 
-                // 检查是否只有标题行（无实际日志内容）
+                // Check if only title line (no actual log content)
                 const hasOnlyTitle = lines.length === 0 || (
                     lines.length <= 2 &&
                     lines[0]?.trim().startsWith('#') &&
@@ -70,7 +70,7 @@ export async function getVisibleCards(): Promise<string[]> {
             }
 
         } catch (error) {
-            // 文件不存在或其他错误，不显示该卡片
+            // File doesn't exist or other error, don't show this card
             console.error(`Check log failed: ${card.data}`, error);
         }
     }
