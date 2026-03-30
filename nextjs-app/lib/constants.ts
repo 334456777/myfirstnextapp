@@ -16,19 +16,19 @@ export const sidebarCards: CardConfig[] = [
     {
         id: 'log1',
         icon: '📋',
-        title: 'Regular Logs',
+        title: '常规日志',
         type: 'log',
         data: `${LOG_BASE_PATH}urls.log`,
-        displayTitle: 'Regular Logs (urls.log)',
+        displayTitle: '常规日志 (urls.log)',
         variant: 'default',
     },
     {
         id: 'log2',
         icon: '⚠️',
-        title: 'Error Logs',
+        title: '错误日志',
         type: 'log',
         data: `${LOG_BASE_PATH}critical_errors.log`,
-        displayTitle: 'Error Logs (critical_errors.log)',
+        displayTitle: '错误日志 (critical_errors.log)',
         variant: 'error',
     },
     {
@@ -42,7 +42,7 @@ export const sidebarCards: CardConfig[] = [
     {
         id: 'weather1',
         icon: '🌦️',
-        title: 'Weather Forecast',
+        title: '天气预报',
         type: 'weather',
         data: null,
         displayTitle: 'ECMWF Weather Forecast',
