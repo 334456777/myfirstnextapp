@@ -20,6 +20,7 @@ interface VersionData {
 interface SingleImagePanelProps {
     imageKey: string;
     targetVersionId: string;
+    isUnavailable: boolean;
     onVersionsLoaded: (key: string, versions: VersionData[]) => void;
     onImageReady: (key: string) => void;
     revealCounter: number;
@@ -28,6 +29,7 @@ interface SingleImagePanelProps {
 const SingleImagePanel: FC<SingleImagePanelProps> = ({
     imageKey,
     targetVersionId,
+    isUnavailable,
     onVersionsLoaded,
     onImageReady,
     revealCounter
@@ -117,8 +119,18 @@ const SingleImagePanel: FC<SingleImagePanelProps> = ({
         }
     }, [imageKey, onVersionsLoaded, onImageReady]);
 
-    // targetVersionId 变化时：相同则立即 ready，不同则开始加载
+    // targetVersionId 变化时：不可用则清空并立即 ready，相同则立即 ready，不同则开始加载
     useEffect(() => {
+        if (isUnavailable) {
+            setPreviousUrl('');
+            setCurrentUrl('');
+            setPendingUrl('');
+            setErrorMessage('');
+            setIsLoading(false);
+            onImageReady(imageKey);
+            return;
+        }
+
         if (targetVersionId === displayedVersionRef.current && currentUrl) {
             onImageReady(imageKey);
             return;
@@ -130,7 +142,7 @@ const SingleImagePanel: FC<SingleImagePanelProps> = ({
             }
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [targetVersionId]);
+    }, [targetVersionId, isUnavailable]);
 
     // 父组件发出 reveal 信号 → 执行 crossfade
     useEffect(() => {
@@ -183,13 +195,19 @@ const SingleImagePanel: FC<SingleImagePanelProps> = ({
                     />
                 )}
 
-                {errorMessage && (
+                {errorMessage && !isUnavailable && (
                     <button
                         className={styles.retryButton}
                         onClick={() => fetchAndPreload(targetVersionId)}
                     >
                         点击重试
                     </button>
+                )}
+
+                {isUnavailable && (
+                    <div className={styles.unavailablePlaceholder}>
+                        <span>暂无历史数据</span>
+                    </div>
                 )}
             </div>
         </div>
@@ -315,13 +333,16 @@ const VersionViewer: FC<VersionViewerProps> = () => {
             <div className={styles.imagesStack}>
                 {IMAGE_KEYS.map((key) => {
                     const myVersions = versionRegistry[key];
-                    const myTargetId = myVersions?.[selectedIndex]?.versionId || 'latest';
+                    const targetVersion = myVersions?.[selectedIndex];
+                    const isUnavailable = selectedIndex > 0 && !targetVersion;
+                    const myTargetId = targetVersion?.versionId || (selectedIndex === 0 ? 'latest' : '');
 
                     return (
                         <SingleImagePanel
                             key={key}
                             imageKey={key}
                             targetVersionId={myTargetId}
+                            isUnavailable={isUnavailable}
                             onVersionsLoaded={handleVersionsLoaded}
                             onImageReady={handleImageReady}
                             revealCounter={revealCounter}
