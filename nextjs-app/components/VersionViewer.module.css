@@ -206,7 +206,8 @@
 }
 
 .ratioSrf,
-.ratioSra {
+.ratioSra,
+.ratioSrq {
   /* 1006 x 340 */
   aspect-ratio: 503 / 170;
 }
