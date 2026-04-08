@@ -124,8 +124,6 @@ const SingleImagePanel: FC<SingleImagePanelProps> = ({
     // targetVersionId 变化时：不可用则清空并立即 ready，相同则立即 ready，不同则开始加载
     useEffect(() => {
         if (isUnavailable) {
-            setPreviousUrl('');
-            setCurrentUrl('');
             setPendingUrl('');
             setErrorMessage('');
             setIsLoading(false);
@@ -155,6 +153,10 @@ const SingleImagePanel: FC<SingleImagePanelProps> = ({
                 setCurrentUrl(pendingUrl);
                 setPendingUrl('');
                 displayedVersionRef.current = targetVersionId;
+            } else if (isUnavailable) {
+                setPreviousUrl(currentUrl);
+                setCurrentUrl('');
+                displayedVersionRef.current = '';
             }
             setIsLoading(false);
         }
@@ -207,7 +209,10 @@ const SingleImagePanel: FC<SingleImagePanelProps> = ({
                 )}
 
                 {isUnavailable && (
-                    <div className={styles.unavailablePlaceholder}>
+                    <div
+                        className={`${styles.unavailablePlaceholder} ${styles.fadeIn}`}
+                        onAnimationEnd={handleTransitionEnd}
+                    >
                         <span>暂无历史数据</span>
                     </div>
                 )}
