@@ -228,6 +228,22 @@
 }
 
 /* === 加载中样式 === */
+.unavailablePlaceholder {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: calc(100% - 20px);
+  height: calc(100% - 20px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+  font-size: 14px;
+  background-color: #f9fafb;
+  border-radius: 4px;
+  border: 1px dashed #d1d5db;
+}
+
 .retryButton {
   padding: 8px 16px;
   background: #007bff;
