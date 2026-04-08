@@ -201,7 +201,7 @@ const SingleImagePanel: FC<SingleImagePanelProps> = ({
 // 主组件：VersionViewer
 // 负责布局、导航和同步协调
 // ==========================================
-const IMAGE_KEYS = ['shm.jpg', 'srf.jpg', 'sra.jpg'];
+const IMAGE_KEYS = ['shm.jpg', 'srf.jpg', 'sra.jpg', 'srq.jpg'];
 
 const VersionViewer: FC<VersionViewerProps> = () => {
     const [versionRegistry, setVersionRegistry] = useState<Record<string, VersionData[]>>({});
