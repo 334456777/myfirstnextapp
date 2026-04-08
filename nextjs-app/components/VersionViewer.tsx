@@ -169,7 +169,7 @@ const SingleImagePanel: FC<SingleImagePanelProps> = ({
     return (
         <div className={styles.singlePanelWrapper}>
             <div className={styles.panelLabel}>
-                <span>{imageKey.split('.')[0].toUpperCase()}</span>
+                <span>{{'shm': '舒曼共振', 'srf': '共振频率(Hz)', 'sra': '共振幅度', 'srq': '品质因数'}[imageKey.split('.')[0]] || imageKey}</span>
                 {isLoading && (
                     <span className={styles.statusText}>加载中...</span>
                 )}
