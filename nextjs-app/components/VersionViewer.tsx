@@ -21,6 +21,7 @@ interface SingleImagePanelProps {
     imageKey: string;
     targetVersionId: string;
     isUnavailable: boolean;
+    selectedIndex: number;
     onVersionsLoaded: (key: string, versions: VersionData[]) => void;
     onImageReady: (key: string) => void;
     revealCounter: number;
@@ -30,6 +31,7 @@ const SingleImagePanel: FC<SingleImagePanelProps> = ({
     imageKey,
     targetVersionId,
     isUnavailable,
+    selectedIndex,
     onVersionsLoaded,
     onImageReady,
     revealCounter
@@ -142,7 +144,7 @@ const SingleImagePanel: FC<SingleImagePanelProps> = ({
             }
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [targetVersionId, isUnavailable]);
+    }, [targetVersionId, isUnavailable, selectedIndex]);
 
     // 父组件发出 reveal 信号 → 执行 crossfade
     useEffect(() => {
@@ -343,6 +345,7 @@ const VersionViewer: FC<VersionViewerProps> = () => {
                             imageKey={key}
                             targetVersionId={myTargetId}
                             isUnavailable={isUnavailable}
+                            selectedIndex={selectedIndex}
                             onVersionsLoaded={handleVersionsLoaded}
                             onImageReady={handleImageReady}
                             revealCounter={revealCounter}
