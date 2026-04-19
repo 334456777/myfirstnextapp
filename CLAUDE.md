@@ -23,16 +23,13 @@ npm run lint         # Lint
 
 ## 生产部署
 
-代码存在两个位置，部署时**两个都要 build**：
+`/home/yusteven/html` 是 `/var/www/html` 的软链接，两者指向同一目录，只需 build 一次：
 
 ```bash
-# 1. 开发目录 build（保持 .next 同步）
+# 1. build
 cd /var/www/html/nextjs-app && npm run build
 
-# 2. 生产目录 build（PM2 实际运行的目录）
-cd /home/yusteven/html/nextjs-app && npm run build
-
-# 3. 重启
+# 2. 重启
 pm2 restart nextjs-app
 ```
 
@@ -75,8 +72,7 @@ pm2 restart nextjs-app
 
 ## 重要路径
 
-- 生产部署：`/home/yusteven/html/nextjs-app/`（PM2 `cwd` 指向此处）
-- 开发目录：`/var/www/html/nextjs-app/`
+- 项目目录：`/var/www/html/nextjs-app/`（`/home/yusteven/html` 是其软链接，PM2 `cwd` 通过软链接指向此处）
 - 日志文件：`/home/yusteven/boluo/pyt/urls.log`、`critical_errors.log`
 - Nginx 配置：`/etc/nginx/sites-enabled/default`（对应项目根 `nginx.conf`）
 - PM2 配置：`nextjs-app/ecosystem.config.js`
