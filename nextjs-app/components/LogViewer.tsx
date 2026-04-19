@@ -1,6 +1,6 @@
 'use client';
 
-import { FC, useEffect, useState, useMemo, useRef } from 'react';
+import { FC, useEffect, useState, useMemo } from 'react';
 import styles from './LogViewer.module.css';
 
 interface LogViewerProps {
@@ -335,24 +335,7 @@ const LogViewer: FC<LogViewerProps> = ({ url }) => {
         return { recentAll, lastCheckDate, nextCheckDate, progress, elapsed, remaining };
     }, [cycles]);
 
-    // 动态计算可显示的圆点数量
-    const recentRowRef = useRef<HTMLDivElement>(null);
-    const [maxDots, setMaxDots] = useState(8);
-
-    useEffect(() => {
-        const el = recentRowRef.current;
-        if (!el) return;
-        const calc = () => {
-            const width = el.clientWidth;
-            setMaxDots(Math.max(3, Math.floor((width - 78) / 20)));
-        };
-        calc();
-        const observer = new ResizeObserver(calc);
-        observer.observe(el);
-        return () => observer.disconnect();
-    }, []);
-
-    const visibleDots = summary.recentAll.slice(0, maxDots);
+    const visibleDots = summary.recentAll.slice(0, 20);
 
     if (loading) return <div className={styles.loading}>Loading...</div>;
     if (error) return <div className={styles.error}>Load failed: {error}</div>;
@@ -383,16 +366,22 @@ const LogViewer: FC<LogViewerProps> = ({ url }) => {
                                 <div className={styles.timeTitle}>最后检查</div>
                             </div>
                             <div className={styles.arrowOuter}>
+                                <div className={styles.braceRow}>
+                                    <div className={styles.braceGroup} style={{ width: `${Math.round(summary.progress * 100)}%` }}>
+                                        <div className={styles.braceText}>已过 {summary.elapsed}</div>
+                                        <div className={styles.brace} />
+                                    </div>
+                                    <div className={styles.braceGroup} style={{ flex: 1 }}>
+                                        <div className={styles.braceText}>剩余 {summary.remaining}</div>
+                                        <div className={styles.brace} />
+                                    </div>
+                                </div>
                                 <div className={styles.arrowContainer}>
                                     <div
                                         className={styles.arrowFill}
                                         style={{ width: `${Math.round(summary.progress * 100)}%` }}
-                                    >
-                                        <span className={styles.arrowTextElapsed}>已过 {summary.elapsed}</span>
-                                    </div>
-                                    <div className={styles.arrowRemaining}>
-                                        <span className={styles.arrowTextRemaining}>剩余 {summary.remaining}</span>
-                                    </div>
+                                    />
+                                    <div className={styles.arrowRemaining} />
                                 </div>
                             </div>
                             <div className={styles.timeBlock}>
@@ -402,8 +391,7 @@ const LogViewer: FC<LogViewerProps> = ({ url }) => {
                         </div>
                     )}
                     {visibleDots.length > 0 && (
-                        <div className={styles.recentRow} ref={recentRowRef}>
-                            <span className={styles.summaryLabel}>最近 {visibleDots.length} 次</span>
+                        <div className={styles.recentRow}>
                             <span className={styles.summaryDots}>
                                 {visibleDots.map((item, i) => (
                                     <span

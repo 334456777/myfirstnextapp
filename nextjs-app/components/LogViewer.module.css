@@ -67,6 +67,51 @@
 .arrowOuter {
     flex: 1;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* --- 大括号标注行 --- */
+.braceRow {
+    display: flex;
+    gap: 2px;
+}
+
+.braceGroup {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 0;
+}
+
+.braceText {
+    font-size: 10px;
+    font-weight: 700;
+    color: #475569;
+    white-space: nowrap;
+    margin-bottom: 3px;
+}
+
+.brace {
+    width: 100%;
+    height: 10px;
+    border: 1.5px solid #94a3b8;
+    border-bottom: none;
+    border-radius: 6px 6px 0 0;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.brace::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: -5px;
+    width: 1.5px;
+    height: 5px;
+    background: #94a3b8;
+    transform: translateX(-50%);
 }
 
 .arrowContainer {
@@ -84,57 +129,26 @@
     height: 100%;
     background: linear-gradient(90deg, #22c55e, #4ade80);
     transition: width 0.6s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-}
-
-.arrowTextElapsed {
-    font-size: 10px;
-    font-weight: 700;
-    color: #fff;
-    white-space: nowrap;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-    padding: 0 6px;
 }
 
 .arrowRemaining {
     flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 0;
-    padding-right: 14px;
 }
 
-.arrowTextRemaining {
-    font-size: 10px;
-    font-weight: 700;
-    color: #64748b;
-    white-space: nowrap;
-}
-
-/* --- 最近 N 次行 --- */
+/* --- 最近检查圆点行 --- */
 .recentRow {
     display: flex;
     align-items: center;
-    gap: 10px;
+    justify-content: center;
     padding-top: 10px;
-}
-
-.summaryLabel {
-    font-size: 12px;
-    font-weight: 600;
-    color: #64748b;
-    letter-spacing: 0.5px;
-    white-space: nowrap;
 }
 
 .summaryDots {
     display: flex;
-    gap: 6px;
-    font-size: 14px;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 5px;
+    font-size: 13px;
 }
 
 .dotGreen, .dotGray {
