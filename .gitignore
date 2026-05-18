@@ -26,6 +26,7 @@ nextjs-app/logs/
 # 私有账单保存数据
 nextjs-app/data/
 monthly-statement.html
+nginx.conf
 # 忽略所有 .log 文件 (如 s3-service.log, weather-service.log)
 *.log
 npm-debug.log*
