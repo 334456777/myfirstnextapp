@@ -23,6 +23,9 @@ backend/cache/*
 # --- 日志文件 ---
 # 忽略 nextjs-app 中的 logs 文件夹
 nextjs-app/logs/
+# 私有账单保存数据
+nextjs-app/data/
+monthly-statement.html
 # 忽略所有 .log 文件 (如 s3-service.log, weather-service.log)
 *.log
 npm-debug.log*
