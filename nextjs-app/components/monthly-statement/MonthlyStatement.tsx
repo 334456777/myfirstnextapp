@@ -14,6 +14,13 @@ type EditableStatement = Omit<MonthlyStatementData, 'transactions'> & {
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
+type CurrentMonthPeriod = {
+    periodStart: string;
+    periodEnd: string;
+    daysInMonth: number;
+    monthName: string;
+};
+
 interface MonthlyStatementProps {
     initialData: MonthlyStatementData;
 }
@@ -25,7 +32,7 @@ const toEditableStatement = (data: MonthlyStatementData): EditableStatement => (
 
 const toPersistableStatement = (data: EditableStatement): MonthlyStatementData => ({
     meta: {
-        ...data.meta,
+        accountNumber: data.meta.accountNumber,
         beginningBalance: Number(data.meta.beginningBalance) || 0,
     },
     transactions: data.transactions.map((transaction) => ({
@@ -38,6 +45,42 @@ const toPersistableStatement = (data: EditableStatement): MonthlyStatementData =
 
 const currency = (value: number | string) =>
     `\u00a5${Math.trunc(Number(value) || 0).toLocaleString('en-US')}`;
+
+const formatPeriodDate = (date: Date) =>
+    date.toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+    });
+
+const getCurrentMonthPeriod = () => {
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+    return {
+        periodStart: formatPeriodDate(firstDay),
+        periodEnd: formatPeriodDate(lastDay),
+        daysInMonth: lastDay.getDate(),
+        monthName: firstDay.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+    };
+};
+
+const withCurrentMonthPeriod = (
+    data: MonthlyStatementData,
+    currentMonthPeriod: CurrentMonthPeriod = getCurrentMonthPeriod()
+): MonthlyStatementData => {
+    const { periodStart, periodEnd } = currentMonthPeriod;
+
+    return {
+        ...data,
+        meta: {
+            ...data.meta,
+            periodStart,
+            periodEnd,
+        },
+    };
+};
 
 const Icon = ({ children, size = 16 }: { children: ReactNode; size?: number }) => (
     <svg
@@ -88,30 +131,17 @@ const EyeIcon = () => (
 );
 
 export default function MonthlyStatement({ initialData }: MonthlyStatementProps) {
-    const [statement, setStatement] = useState<EditableStatement>(() => toEditableStatement(initialData));
+    const [currentMonthPeriod] = useState(getCurrentMonthPeriod);
+    const [statement, setStatement] = useState<EditableStatement>(() =>
+        toEditableStatement(withCurrentMonthPeriod(initialData, currentMonthPeriod))
+    );
     const [isEditing, setIsEditing] = useState(true);
     const [saveState, setSaveState] = useState<SaveState>('idle');
     const [errorMessage, setErrorMessage] = useState('');
 
     const { meta, transactions } = statement;
 
-    const daysInMonth = useMemo(() => {
-        const date = new Date(meta.periodStart);
-        if (Number.isNaN(date.getTime())) {
-            return 30;
-        }
-
-        return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-    }, [meta.periodStart]);
-
-    const monthName = useMemo(() => {
-        const date = new Date(meta.periodStart);
-        if (Number.isNaN(date.getTime())) {
-            return '-';
-        }
-
-        return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-    }, [meta.periodStart]);
+    const { daysInMonth, monthName } = currentMonthPeriod;
 
     const total = useMemo(
         () => transactions.reduce((sum, transaction) => sum + (Number(transaction.amount) || 0), 0),
@@ -207,7 +237,7 @@ export default function MonthlyStatement({ initialData }: MonthlyStatementProps)
             }
 
             const savedStatement = (await response.json()) as MonthlyStatementData;
-            setStatement(toEditableStatement(savedStatement));
+            setStatement(toEditableStatement(withCurrentMonthPeriod(savedStatement, currentMonthPeriod)));
             setSaveState('saved');
             setIsEditing(false);
         } catch (error) {
@@ -253,21 +283,9 @@ export default function MonthlyStatement({ initialData }: MonthlyStatementProps)
                 <section className={styles.statementCard} aria-label="Monthly budget statement">
                     <div className={styles.meta}>
                         <div>
-                            <input
-                                value={meta.periodStart}
-                                onChange={(event) => updateMeta('periodStart', event.target.value)}
-                                readOnly={!isEditing}
-                                className={styles.cellInput}
-                                style={{ width: 130, textAlign: 'right' }}
-                            />
+                            <span>{meta.periodStart}</span>
                             {' through '}
-                            <input
-                                value={meta.periodEnd}
-                                onChange={(event) => updateMeta('periodEnd', event.target.value)}
-                                readOnly={!isEditing}
-                                className={styles.cellInput}
-                                style={{ width: 130, textAlign: 'right' }}
-                            />
+                            <span>{meta.periodEnd}</span>
                         </div>
                         <div>
                             Primary Account:{' '}

@@ -5,8 +5,6 @@ import type { MonthlyStatementData, StatementMeta, StatementTransaction } from '
 
 export const defaultMonthlyStatement: MonthlyStatementData = {
     meta: {
-        periodStart: 'January 1, 2026',
-        periodEnd: 'January 31, 2026',
         accountNumber: '000000000000',
         beginningBalance: 0,
     },
@@ -58,8 +56,6 @@ export function normalizeMonthlyStatement(input: unknown): MonthlyStatementData 
 
     const rawMeta = asRecord(root.meta);
     const meta: StatementMeta = {
-        periodStart: toStringValue(rawMeta?.periodStart, fallback.meta.periodStart),
-        periodEnd: toStringValue(rawMeta?.periodEnd, fallback.meta.periodEnd),
         accountNumber: toStringValue(rawMeta?.accountNumber, fallback.meta.accountNumber),
         beginningBalance: toNumberValue(rawMeta?.beginningBalance, fallback.meta.beginningBalance),
     };
