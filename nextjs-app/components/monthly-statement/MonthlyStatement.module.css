@@ -74,6 +74,21 @@
     font-size: 10px;
 }
 
+.metaLine {
+    align-items: baseline;
+    display: flex;
+    justify-content: flex-end;
+    gap: 2px;
+}
+
+.metaValue {
+    font-weight: 700;
+}
+
+.periodLine {
+    margin-bottom: 2px;
+}
+
 .balanceLine {
     margin-top: 2px;
 }
@@ -94,6 +109,10 @@
 
 .cellInput:read-only {
     cursor: default;
+}
+
+.cellText {
+    display: block;
 }
 
 .tabular {

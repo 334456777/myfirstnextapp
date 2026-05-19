@@ -168,6 +168,12 @@ export default function MonthlyStatement({ initialData }: MonthlyStatementProps)
         return `${maxLength + 1}ch`;
     }, [transactions]);
 
+    const accountInputWidth = useMemo(() => `${Math.max(String(meta.accountNumber).length + 2, 3)}ch`, [meta.accountNumber]);
+    const balanceInputWidth = useMemo(
+        () => `${Math.max(String(meta.beginningBalance).length, 1)}ch`,
+        [meta.beginningBalance]
+    );
+
     const updateMeta = (field: keyof EditableStatement['meta'], value: string | number) => {
         setSaveState('idle');
         setStatement((current) => ({
@@ -282,32 +288,38 @@ export default function MonthlyStatement({ initialData }: MonthlyStatementProps)
 
                 <section className={styles.statementCard} aria-label="Monthly budget statement">
                     <div className={styles.meta}>
-                        <div>
+                        <div className={styles.periodLine}>
                             <span>{meta.periodStart}</span>
                             {' through '}
                             <span>{meta.periodEnd}</span>
                         </div>
-                        <div>
-                            Primary Account:{' '}
-                            <input
-                                value={meta.accountNumber}
-                                onChange={(event) => updateMeta('accountNumber', event.target.value)}
-                                readOnly={!isEditing}
-                                className={styles.cellInput}
-                                style={{ width: 140, textAlign: 'right', fontWeight: 700 }}
-                            />
+                        <div className={styles.metaLine}>
+                            <span>Primary Account:</span>
+                            {isEditing ? (
+                                <input
+                                    value={meta.accountNumber}
+                                    onChange={(event) => updateMeta('accountNumber', event.target.value)}
+                                    className={styles.cellInput}
+                                    style={{ width: accountInputWidth, textAlign: 'right', fontWeight: 700 }}
+                                />
+                            ) : (
+                                <span className={styles.metaValue}>{meta.accountNumber}</span>
+                            )}
                         </div>
-                        <div className={styles.balanceLine}>
-                            Beginning Balance: {'\u00a5'}
-                            <input
-                                type="text"
-                                inputMode="decimal"
-                                value={meta.beginningBalance}
-                                onChange={(event) => updateBeginningBalance(event.target.value)}
-                                readOnly={!isEditing}
-                                className={`${styles.cellInput} ${styles.tabular}`}
-                                style={{ width: 90, textAlign: 'right', fontWeight: 700 }}
-                            />
+                        <div className={`${styles.metaLine} ${styles.balanceLine}`}>
+                            <span>Beginning Balance: {'\u00a5'}</span>
+                            {isEditing ? (
+                                <input
+                                    type="text"
+                                    inputMode="decimal"
+                                    value={meta.beginningBalance}
+                                    onChange={(event) => updateBeginningBalance(event.target.value)}
+                                    className={`${styles.cellInput} ${styles.tabular}`}
+                                    style={{ width: balanceInputWidth, textAlign: 'right', fontWeight: 700 }}
+                                />
+                            ) : (
+                                <span className={`${styles.metaValue} ${styles.tabular}`}>{meta.beginningBalance}</span>
+                            )}
                         </div>
                     </div>
 
@@ -326,18 +338,21 @@ export default function MonthlyStatement({ initialData }: MonthlyStatementProps)
                             {transactions.map((transaction) => (
                                 <tr key={transaction.id} className={styles.rowGroup}>
                                     <td>
-                                        <input
-                                            value={transaction.desc}
-                                            onChange={(event) => updateTransaction(transaction.id, 'desc', event.target.value)}
-                                            readOnly={!isEditing}
-                                            className={styles.cellInput}
-                                            style={{ width: '100%' }}
-                                        />
+                                        {isEditing ? (
+                                            <input
+                                                value={transaction.desc}
+                                                onChange={(event) => updateTransaction(transaction.id, 'desc', event.target.value)}
+                                                className={styles.cellInput}
+                                                style={{ width: '100%' }}
+                                            />
+                                        ) : (
+                                            <span className={styles.cellText}>{transaction.desc}</span>
+                                        )}
                                     </td>
                                     <td className={`${styles.amountCell} ${styles.tabular}`}>
                                         {isEditing ? (
                                             <>
-                                                <span>{'-\u00a5'}</span>
+                                                <span>{'\u00a5'}</span>
                                                 <input
                                                     value={transaction.amount}
                                                     onChange={(event) => updateTransaction(transaction.id, 'amount', event.target.value)}
@@ -351,7 +366,7 @@ export default function MonthlyStatement({ initialData }: MonthlyStatementProps)
                                                 />
                                             </>
                                         ) : (
-                                            <span>-{currency(transaction.amount)}</span>
+                                            <span>{currency(transaction.amount)}</span>
                                         )}
                                     </td>
                                     <td className={`${styles.deleteCell} ${styles.noPrint}`} style={{ width: isEditing ? 28 : 0 }}>
