@@ -1,7 +1,6 @@
 // lib/data.ts
 import 'server-only'; // 🛡️ Protection mechanism: ensure this file never leaks to client
 import fs from 'fs/promises';
-import path from 'path';
 import { sidebarCards } from './constants';
 
 /**

@@ -1,12 +1,12 @@
 'use client';
 
+/* eslint-disable @next/next/no-img-element */
+
 import { FC, useState, useEffect, useRef, useCallback } from 'react';
 import { ArrowUpIcon, ArrowDownIcon } from './icons';
 import styles from './VersionViewer.module.css';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://www.yusteven.com';
-
-interface VersionViewerProps {}
 
 interface VersionData {
     versionId: string;
@@ -121,14 +121,32 @@ const SingleImagePanel: FC<SingleImagePanelProps> = ({
         }
     }, [imageKey, onVersionsLoaded, onImageReady]);
 
+    const markUnavailableReady = useCallback(() => {
+        setPendingUrl('');
+        setErrorMessage('');
+        setIsLoading(false);
+        onImageReady(imageKey);
+    }, [imageKey, onImageReady]);
+
+    const applyReveal = useCallback(() => {
+        if (pendingUrl) {
+            setPreviousUrl(currentUrl);
+            setCurrentUrl(pendingUrl);
+            setPendingUrl('');
+            displayedVersionRef.current = targetVersionId;
+        } else if (isUnavailable) {
+            setPreviousUrl(currentUrl);
+            setCurrentUrl('');
+            displayedVersionRef.current = '';
+        }
+        setIsLoading(false);
+    }, [currentUrl, isUnavailable, pendingUrl, targetVersionId]);
+
     // targetVersionId 变化时：不可用则清空并立即 ready，相同则立即 ready，不同则开始加载
     useEffect(() => {
         if (isUnavailable) {
-            setPendingUrl('');
-            setErrorMessage('');
-            setIsLoading(false);
-            onImageReady(imageKey);
-            return;
+            const timeoutId = window.setTimeout(markUnavailableReady, 0);
+            return () => window.clearTimeout(timeoutId);
         }
 
         if (targetVersionId === displayedVersionRef.current && currentUrl) {
@@ -141,27 +159,16 @@ const SingleImagePanel: FC<SingleImagePanelProps> = ({
                 abortControllerRef.current.abort();
             }
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [targetVersionId, isUnavailable, selectedIndex]);
+    }, [currentUrl, fetchAndPreload, imageKey, isUnavailable, markUnavailableReady, onImageReady, selectedIndex, targetVersionId]);
 
     // 父组件发出 reveal 信号 → 执行 crossfade
     useEffect(() => {
         if (revealCounter > lastRevealRef.current) {
             lastRevealRef.current = revealCounter;
-            if (pendingUrl) {
-                setPreviousUrl(currentUrl);
-                setCurrentUrl(pendingUrl);
-                setPendingUrl('');
-                displayedVersionRef.current = targetVersionId;
-            } else if (isUnavailable) {
-                setPreviousUrl(currentUrl);
-                setCurrentUrl('');
-                displayedVersionRef.current = '';
-            }
-            setIsLoading(false);
+            const timeoutId = window.setTimeout(applyReveal, 0);
+            return () => window.clearTimeout(timeoutId);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [revealCounter]);
+    }, [applyReveal, revealCounter]);
 
     // crossfade 动画结束后清除旧图层
     const handleTransitionEnd = () => {
@@ -228,7 +235,7 @@ const SingleImagePanel: FC<SingleImagePanelProps> = ({
 // ==========================================
 const IMAGE_KEYS = ['shm.jpg', 'srf.jpg', 'sra.jpg', 'srq.jpg'];
 
-const VersionViewer: FC<VersionViewerProps> = () => {
+const VersionViewer: FC = () => {
     const [versionRegistry, setVersionRegistry] = useState<Record<string, VersionData[]>>({});
     const [selectedIndex, setSelectedIndex] = useState<number>(0);
     const [readyKeys, setReadyKeys] = useState<Set<string>>(new Set());
@@ -259,12 +266,17 @@ const VersionViewer: FC<VersionViewerProps> = () => {
         setReadyKeys(new Set());
     }, []);
 
+    const revealReadyImages = useCallback(() => {
+        setRevealCounter(c => c + 1);
+    }, []);
+
     // 3 张都 ready → 统一 reveal
     useEffect(() => {
         if (readyKeys.size === IMAGE_KEYS.length) {
-            setRevealCounter(c => c + 1);
+            const timeoutId = window.setTimeout(revealReadyImages, 0);
+            return () => window.clearTimeout(timeoutId);
         }
-    }, [readyKeys.size]);
+    }, [readyKeys.size, revealReadyImages]);
 
     const referenceVersions = versionRegistry[IMAGE_KEYS[0]] || [];
 

@@ -1,7 +1,11 @@
 'use client';
 
-import { FC, ReactNode, useRef } from 'react';
+/* eslint-disable @next/next/no-img-element */
+
+import { type CSSProperties, type FC, type ReactNode, useRef } from 'react';
 import { Gallery, Item } from 'react-photoswipe-gallery';
+import type PhotoSwipe from 'photoswipe';
+import type { UIElementData } from 'photoswipe';
 import 'photoswipe/dist/photoswipe.css';
 import styles from './ImageGallery.module.css';
 
@@ -106,7 +110,7 @@ const ImageGallery: FC<ImageGalleryProps> = ({
         counter: showCounter,
     };
 
-    const handleGalleryInit = (pswp: any) => {
+    const handleGalleryInit = (pswp: PhotoSwipe) => {
         pswp.on('zoomPanUpdate', () => {
             if (pswp.currSlide) {
                 savedZoomRef.current = pswp.currSlide.currZoomLevel || 1;
@@ -136,7 +140,7 @@ const ImageGallery: FC<ImageGalleryProps> = ({
         });
     };
 
-    const uiElements = [];
+    const uiElements: UIElementData[] = [];
 
     if (showZoomIndicator) {
         uiElements.push({
@@ -144,7 +148,7 @@ const ImageGallery: FC<ImageGalleryProps> = ({
             order: 10,
             isButton: false,
             html: `<div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.7); color: white; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; pointer-events: none;">100%</div>`,
-            onInit: (el: HTMLElement, pswp: any) => {
+            onInit: (el: HTMLElement, pswp: PhotoSwipe) => {
                 pswp.on('zoomPanUpdate', () => {
                     if (pswp.currSlide) {
                         const zoomLevel = Math.round(pswp.currSlide.currZoomLevel * 100);
@@ -162,12 +166,20 @@ const ImageGallery: FC<ImageGalleryProps> = ({
             isButton: true,
             html: '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M15 3l2.3 2.3-2.89 2.87 1.42 1.42L18.7 6.7 21 9V3h-6zM3 9l2.3-2.3 2.87 2.89 1.42-1.42L6.7 5.3 9 3H3v6zm6 12l-2.3-2.3 2.89-2.87-1.42-1.42L5.3 17.3 3 15v6h6zm12-6l-2.3 2.3-2.87-2.89-1.42 1.42 2.89 2.87L15 21h6v-6z"/></svg>',
             appendTo: 'bar' as const,
-            onClick: (e: any, pswp: any) => {
-                const currZoomLevel = pswp.currSlide.currZoomLevel;
-                if (currZoomLevel >= pswp.currSlide.zoomLevels.max) {
-                    pswp.currSlide.zoomTo(pswp.currSlide.zoomLevels.initial, { x: 0, y: 0 }, 333);
+            onClick: (event: MouseEvent, element: HTMLElement, pswp: PhotoSwipe) => {
+                void event;
+                void element;
+
+                const currentSlide = pswp.currSlide;
+                if (!currentSlide) {
+                    return;
+                }
+
+                const currZoomLevel = currentSlide.currZoomLevel;
+                if (currZoomLevel >= currentSlide.zoomLevels.max) {
+                    currentSlide.zoomTo(currentSlide.zoomLevels.initial, { x: 0, y: 0 }, 333);
                 } else {
-                    pswp.currSlide.zoomTo(pswp.currSlide.zoomLevels.secondary, { x: 0, y: 0 }, 333);
+                    currentSlide.zoomTo(currentSlide.zoomLevels.secondary, { x: 0, y: 0 }, 333);
                 }
             },
         });
@@ -176,8 +188,9 @@ const ImageGallery: FC<ImageGalleryProps> = ({
     return (
         <Gallery
             options={photoswipeOptions}
-            uiElements={uiElements as any}
+            uiElements={uiElements}
             onOpen={handleGalleryInit}
+            withCaption={showCaption}
         >
             <div
                 className={styles.imageContainer}
@@ -186,7 +199,7 @@ const ImageGallery: FC<ImageGalleryProps> = ({
                     '--columns-tablet': columns.tablet || 1,
                     '--columns-desktop': columns.desktop || 2,
                     '--columns-wide': columns.wide || 3,
-                } as React.CSSProperties}
+                } as CSSProperties}
             >
                 {images.map((item, index) => (
                     <div key={item.key} className={styles.imageWrapper}>
@@ -201,8 +214,9 @@ const ImageGallery: FC<ImageGalleryProps> = ({
                             width={String(item.width || 1200)}
                             height={String(item.height || 800)}
                             alt={item.alt || item.label || `Image ${index + 1}`}
+                            caption={item.label || item.alt || `Image ${index + 1}`}
                         >
-                            {({ ref, open }: any) => (
+                            {({ ref, open }) => (
                                 <>
                                     <div className={styles.imagePlaceholder}>
                                         <div className={styles.spinner}></div>

@@ -19,7 +19,7 @@ export default function MainContent({ initialWeatherData, initialVisibleCards }:
     const [displayContent, setDisplayContent] = useState<string | null>(null);
     const [contentType, setContentType] = useState<string>('');
 
-    const handleCardEnter = (type: string, data: string | null, title: string, cardId: string) => {
+    const handleCardEnter = (type: string, data: string | null, title: string) => {
         if (!isLocked) {
             setDisplayTitle(title);
             setContentType(type);

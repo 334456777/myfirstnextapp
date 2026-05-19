@@ -261,6 +261,7 @@ const LogViewer: FC<LogViewerProps> = ({ url }) => {
     const [logContent, setLogContent] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [currentTime, setCurrentTime] = useState(() => Date.now());
 
     useEffect(() => {
         const fetchLog = async () => {
@@ -270,6 +271,7 @@ const LogViewer: FC<LogViewerProps> = ({ url }) => {
                 const response = await fetch(url, { cache: 'no-cache' });
                 if (!response.ok) throw new Error(`Failed: ${response.status}`);
                 setLogContent(await response.text());
+                setCurrentTime(Date.now());
             } catch (err) {
                 setError(err instanceof Error ? err.message : 'Unknown error');
             } finally {
@@ -278,6 +280,14 @@ const LogViewer: FC<LogViewerProps> = ({ url }) => {
         };
         fetchLog();
     }, [url]);
+
+    useEffect(() => {
+        const intervalId = window.setInterval(() => {
+            setCurrentTime(Date.now());
+        }, 60000);
+
+        return () => window.clearInterval(intervalId);
+    }, []);
 
     const { cycles, isEmpty } = useMemo(
         () => parseLog(logContent), [logContent]
@@ -315,25 +325,25 @@ const LogViewer: FC<LogViewerProps> = ({ url }) => {
             const [y, m, d] = cycles[0].date.split('-').map(Number);
             const [h, min, s] = cycles[0].startTime.split(':').map(Number);
             lastCheckDate = new Date(y, m - 1, d, h, min, s);
-            elapsed = formatElapsed(Date.now() - lastCheckDate.getTime());
+            elapsed = formatElapsed(currentTime - lastCheckDate.getTime());
         }
         if (nextCheckStr) {
             nextCheckDate = parseNextCheckDate(nextCheckStr);
         }
         if (lastCheckDate && nextCheckDate) {
             const total = nextCheckDate.getTime() - lastCheckDate.getTime();
-            const passed = Date.now() - lastCheckDate.getTime();
+            const passed = currentTime - lastCheckDate.getTime();
             if (total > 0) progress = Math.min(Math.max(passed / total, 0), 1);
         }
 
         let remaining = '';
         if (nextCheckDate) {
-            const rem = nextCheckDate.getTime() - Date.now();
+            const rem = nextCheckDate.getTime() - currentTime;
             remaining = rem > 0 ? formatElapsed(rem) : '已过期';
         }
 
         return { recentAll, lastCheckDate, nextCheckDate, progress, elapsed, remaining };
-    }, [cycles]);
+    }, [currentTime, cycles]);
 
     const visibleDots = summary.recentAll.slice(0, 20);
 

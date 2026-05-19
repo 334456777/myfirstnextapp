@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
                 'Cache-Control': 'no-cache',
             },
         });
-    } catch (error) {
+    } catch {
         return NextResponse.json({ error: 'Log file not found' }, { status: 404 });
     }
 }

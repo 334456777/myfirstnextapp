@@ -1,7 +1,6 @@
 declare module '*.css' {
-    const content: any;
+    const content: Record<string, string>;
     export default content;
 }
 
 declare module 'photoswipe/dist/photoswipe.css';
-declare module 'react-photoswipe-gallery';
