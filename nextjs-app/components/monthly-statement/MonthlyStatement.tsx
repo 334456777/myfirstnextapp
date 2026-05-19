@@ -164,6 +164,11 @@ export default function MonthlyStatement({ initialData }: MonthlyStatementProps)
         return `${maxLength + 1}ch`;
     }, [transactions]);
 
+    const amountDisplayWidth = useMemo(() => {
+        const maxLength = Math.max(...transactions.map((transaction) => currency(transaction.amount).length - 1), 4);
+        return `${maxLength}ch`;
+    }, [transactions]);
+
     const accountInputWidth = useMemo(() => `${Math.max(String(meta.accountNumber).length + 2, 3)}ch`, [meta.accountNumber]);
     const balanceInputWidth = useMemo(
         () => `${Math.max(String(meta.beginningBalance).length, 1)}ch`,
@@ -364,7 +369,15 @@ export default function MonthlyStatement({ initialData }: MonthlyStatementProps)
                                                 />
                                             </>
                                         ) : (
-                                            <span>{currency(transaction.amount)}</span>
+                                            <span className={styles.amountReadOnly}>
+                                                <span>{'\u00a5'}</span>
+                                                <span
+                                                    className={`${styles.amountValue} ${styles.tabular}`}
+                                                    style={{ width: amountDisplayWidth }}
+                                                >
+                                                    {currency(transaction.amount).slice(1)}
+                                                </span>
+                                            </span>
                                         )}
                                     </td>
                                     <td className={`${styles.deleteCell} ${styles.noPrint}`} style={{ width: isEditing ? 28 : 0 }}>
