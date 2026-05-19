@@ -395,7 +395,7 @@ export default function MonthlyStatement({ initialData }: MonthlyStatementProps)
 
                             <tr className={styles.totalRow}>
                                 <td>Total Fixed Expenses</td>
-                                <td className={styles.tabular}>-{currency(total)}</td>
+                                <td className={styles.tabular}>{currency(total)}</td>
                                 <td className={styles.noPrint} style={{ width: isEditing ? 28 : 0 }} />
                             </tr>
                         </tbody>

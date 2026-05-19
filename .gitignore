@@ -15,6 +15,7 @@ nginx.conf
 nextjs-app/.next/
 nextjs-app/out/
 nextjs-app/build/
+nextjs-app/tsconfig.tsbuildinfo
 
 # --- Backend (后端) ---
 # 忽略后端缓存文件 (JSON缓存)
