@@ -9,6 +9,10 @@ type EditableTransaction = Omit<StatementTransaction, 'amount'> & {
 };
 
 type EditableStatement = Omit<MonthlyStatementData, 'transactions'> & {
+    meta: MonthlyStatementData['meta'] & {
+        periodStart: string;
+        periodEnd: string;
+    };
     transactions: EditableTransaction[];
 };
 
@@ -25,8 +29,16 @@ interface MonthlyStatementProps {
     initialData: MonthlyStatementData;
 }
 
-const toEditableStatement = (data: MonthlyStatementData): EditableStatement => ({
+const toEditableStatement = (
+    data: MonthlyStatementData,
+    currentMonthPeriod: Pick<CurrentMonthPeriod, 'periodStart' | 'periodEnd'>
+): EditableStatement => ({
     ...data,
+    meta: {
+        ...data.meta,
+        periodStart: currentMonthPeriod.periodStart,
+        periodEnd: currentMonthPeriod.periodEnd,
+    },
     transactions: data.transactions.map((transaction) => ({ ...transaction })),
 });
 
@@ -63,22 +75,6 @@ const getCurrentMonthPeriod = () => {
         periodEnd: formatPeriodDate(lastDay),
         daysInMonth: lastDay.getDate(),
         monthName: firstDay.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
-    };
-};
-
-const withCurrentMonthPeriod = (
-    data: MonthlyStatementData,
-    currentMonthPeriod: CurrentMonthPeriod = getCurrentMonthPeriod()
-): MonthlyStatementData => {
-    const { periodStart, periodEnd } = currentMonthPeriod;
-
-    return {
-        ...data,
-        meta: {
-            ...data.meta,
-            periodStart,
-            periodEnd,
-        },
     };
 };
 
@@ -133,7 +129,7 @@ const EyeIcon = () => (
 export default function MonthlyStatement({ initialData }: MonthlyStatementProps) {
     const [currentMonthPeriod] = useState(getCurrentMonthPeriod);
     const [statement, setStatement] = useState<EditableStatement>(() =>
-        toEditableStatement(withCurrentMonthPeriod(initialData, currentMonthPeriod))
+        toEditableStatement(initialData, currentMonthPeriod)
     );
     const [isEditing, setIsEditing] = useState(true);
     const [saveState, setSaveState] = useState<SaveState>('idle');
@@ -243,7 +239,7 @@ export default function MonthlyStatement({ initialData }: MonthlyStatementProps)
             }
 
             const savedStatement = (await response.json()) as MonthlyStatementData;
-            setStatement(toEditableStatement(withCurrentMonthPeriod(savedStatement, currentMonthPeriod)));
+            setStatement(toEditableStatement(savedStatement, currentMonthPeriod));
             setSaveState('saved');
             setIsEditing(false);
         } catch (error) {
@@ -318,7 +314,9 @@ export default function MonthlyStatement({ initialData }: MonthlyStatementProps)
                                     style={{ width: balanceInputWidth, textAlign: 'right', fontWeight: 700 }}
                                 />
                             ) : (
-                                <span className={`${styles.metaValue} ${styles.tabular}`}>{meta.beginningBalance}</span>
+                                <span className={`${styles.metaValue} ${styles.tabular}`}>
+                                    {(Number(meta.beginningBalance) || 0).toLocaleString('en-US')}
+                                </span>
                             )}
                         </div>
                     </div>

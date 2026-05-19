@@ -1,6 +1,4 @@
 export interface StatementMeta {
-    periodStart?: string;
-    periodEnd?: string;
     accountNumber: string;
     beginningBalance: number;
 }
